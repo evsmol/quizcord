@@ -1,6 +1,20 @@
 from core.client import client
-from core.config import token, version
+from core.config import BOT_TOKEN, VERSION, DATABASE_URL
 
-print(f"[BOT] The bot version {version} has been launched")
-print("[BOT] Connecting to Discord...")
-client.run(token)
+from data import db_session
+
+
+def main():
+    print(f"[DATABASE] Database initialization")
+    db_session.global_init(DATABASE_URL)
+
+    from from_db import add_question
+    print(add_question())
+
+    # print(f"[BOT] The bot version {VERSION} has been launched")
+    # print("[BOT] Connecting to Discord...")
+    # client.run(BOT_TOKEN)
+
+
+if __name__ == '__main__':
+    main()

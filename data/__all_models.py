@@ -1,2 +1,2 @@
-from . import quizzes
-from . import questions
+from data.models import quizzes
+from data.models import questions

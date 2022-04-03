@@ -15,7 +15,7 @@ def global_init(db_url):
         return
 
     if not db_url or not db_url.strip():
-        raise Exception("Необходимо указать файл базы данных.")
+        raise Exception("Необходимо указать адрес базы данных.")
 
     # print(f"Подключение к базе данных по адресу {db_url}")
 

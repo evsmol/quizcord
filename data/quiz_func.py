@@ -27,7 +27,18 @@ def get_quiz(quiz_id):
 
 def get_server_quizzes(server_id):
     db_sess = db_session.create_session()
-    quizzes = db_sess.query(Quiz).filter(Quiz.server_id == server_id)
+    quizzes = db_sess.query(Quiz).filter(Quiz.server_id == server_id,
+                                         Quiz.publication is True)
+    return quizzes
+
+
+def get_user_quizzes(user_id, server_id=None):
+    db_sess = db_session.create_session()
+    if server_id:
+        quizzes = db_sess.query(Quiz).filter(Quiz.author_id == user_id,
+                                             Quiz.server_id == server_id)
+    else:
+        quizzes = db_sess.query(Quiz).filter(Quiz.author_id == user_id)
     return quizzes
 
 
@@ -45,7 +56,7 @@ def del_quiz(quiz_id):
 
 
 def update_quiz(quiz_id, title=None, description=None, server_id=None,
-                players=None):
+                players=None, publication=None):
     db_sess = db_session.create_session()
     quiz = db_sess.query(Quiz).filter(Quiz.id == quiz_id).first()
     if title:
@@ -56,4 +67,6 @@ def update_quiz(quiz_id, title=None, description=None, server_id=None,
         quiz.server_id = server_id
     if players:
         quiz.players = players
+    if players:
+        quiz.publication = publication
     db_sess.commit()

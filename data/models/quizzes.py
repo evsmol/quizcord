@@ -10,5 +10,7 @@ class Quiz(SqlAlchemyBase):
     title = sqlalchemy.Column(sqlalchemy.VARCHAR(length=256))
     description = sqlalchemy.Column(sqlalchemy.VARCHAR(length=2048))
     server_id = sqlalchemy.Column(sqlalchemy.BIGINT)
-    author_id = sqlalchemy.Column(sqlalchemy.BIGINT)
+    author_id = sqlalchemy.Column(sqlalchemy.BIGINT, nullable=False)
     players = sqlalchemy.Column(sqlalchemy.JSON)
+    publication = sqlalchemy.Column(sqlalchemy.BOOLEAN, default=False,
+                                    nullable=False)

@@ -9,9 +9,10 @@ class ServerQuizzes(Embed):
     def __init__(self, server_id, **kwargs):
         super().__init__(**kwargs)
         server_quizzes = get_server_quizzes(server_id)
-        self.title = 'Серверные квизы'
-        self.description = '\n'.join(
+        server_list = '\n'.join(
             f'`[{quiz.id}]` {quiz.title if quiz.title else NULL_QUIZ_TITLE} '
-            f'от <@{quiz.author_id}>' for quiz in server_quizzes
-        )
+            f'от <@{quiz.author_id}>' for quiz in server_quizzes)
+        self.title = 'Серверные квизы'
+        self.description = server_list if server_list \
+            else 'Нет доступных квизов'
         self.colour = QuizcordColor

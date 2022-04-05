@@ -13,5 +13,7 @@ class Help(Embed):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.title = f'Справка по quizcord'
-        self.description = 'Пункт первый\nПункт второй\nИ что-то третье...'
+        self.description = '-создать*\n' \
+                           '-квизы\n' \
+                           '-мои квизы*'
         self.colour = QuizcordColor

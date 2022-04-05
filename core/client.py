@@ -1,5 +1,5 @@
-from discord import Intents
-from discord.ext.commands import Bot, CommandInvokeError
+from discord import Intents, errors
+from discord.ext.commands import Bot, Context
 from discord_components import DiscordComponents, Interaction
 
 import embeds
@@ -36,30 +36,54 @@ async def on_button_click(interaction: Interaction):
 
 # MESSAGES
 @client.command(name='квизы')
-async def get_server_quizzes(message):
-    if message.guild:
-        await message.send(embed=embeds.ServerQuizzes(message.guild.id))
+async def get_server_quizzes(ctx: Context):
+    if ctx.guild:
+        await ctx.channel.send(embed=embeds.ServerQuizzes(ctx.guild.id))
 
 
 @client.command(name='помощь')
-async def get_help(message):
-    if message.guild:
-        await message.send(embed=embeds.Help(),
-                           components=embeds.help.keyboard)
+async def get_help(ctx: Context):
+    if ctx.guild:
+        await ctx.channel.send(embed=embeds.Help(),
+                               components=embeds.help.keyboard)
 
 
 @client.command(name='создать')
-async def create_quiz(message):
+async def create_quiz(ctx: Context):
     try:
-        await message.author.send('Создаю новый квиз...')
-        if message.guild:
-            quiz_id = add_quiz(message.author.id, message.guild.id)
-            await message.author.send(
-                embed=embeds.ChangeQuiz(quiz_id, message.guild.name),
-                components=embeds.change_quiz.keyboard)
+        await ctx.author.send('Создаю новый квиз...')
+        await ctx.author.send('*Учтите, что пустой квиз может быть удалён '
+                              'при проверке модератором!*')
+        if ctx.guild:
+            await ctx.message.add_reaction('📨')
+            quiz_id = add_quiz(ctx.author.id, ctx.guild.id)
+            await ctx.author.send(
+                embed=embeds.ChangeQuiz(quiz_id, ctx.guild.name),
+                components=embeds.change_quiz.keyboard_no_published)
+        elif len(ctx.author.mutual_guilds) == 1:
+            quiz_id = add_quiz(ctx.author.id, ctx.author.mutual_guilds[0].id)
+            await ctx.author.send(
+                embed=embeds.ChangeQuiz(quiz_id,
+                                        ctx.author.mutual_guilds[0].name),
+                components=embeds.change_quiz.keyboard_published)
         else:
-            quiz_id = add_quiz(message.author.id)
-    except Exception as e:
-        await message.send('Чтобы создать квиз, откройте доступ к личным '
-                           'сообщениям')
+            quiz_id = add_quiz(ctx.author.id)
+            servers_names = [server.name
+                             for server in ctx.author.mutual_guilds]
+            await ctx.author.send(embed=embeds.ChooseServer(servers_names))
+    except errors.Forbidden as e:
+        await ctx.channel.send('Чтобы создать квиз, откройте доступ к личным '
+                               'сообщениям')
         print(f'[ERROR] {e}')
+
+
+@client.command(name='мои')
+async def get_user_quizzes(ctx: Context, ctx2):
+    if ctx.guild:
+        await ctx.channel.send(embed=await embeds.UserQuizzes(ctx.author.id,
+                                                              ctx.author.name,
+                                                              ctx.guild.id))
+    else:
+        await ctx.author.send(embed=await embeds.UserQuizzes(ctx.author.id,
+                                                             ctx.author.name,
+                                                             client=client))

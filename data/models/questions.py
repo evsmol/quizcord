@@ -7,7 +7,7 @@ class Question(SqlAlchemyBase):
 
     id = sqlalchemy.Column(sqlalchemy.Integer,
                            primary_key=True, autoincrement=True)
-    quiz_id = sqlalchemy.Column(sqlalchemy.Integer)
+    quiz_id = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
     text = sqlalchemy.Column(sqlalchemy.VARCHAR(length=256))
     explanation = sqlalchemy.Column(sqlalchemy.VARCHAR(length=2048))
     answers = sqlalchemy.Column(sqlalchemy.JSON)

@@ -1,30 +1,27 @@
 from discord import Embed
-from discord_components import Interaction, Button
+from discord_components import Interaction, Button, ButtonStyle
 
 from core.colors import QuizcordColor
 from core.strings import NULL_QUIZ_TITLE, NULL_QUESTION_TEXT
 from data.quiz_func import get_quiz, get_quiz_questions
 
-keyboard = [
+keyboard_no_published = [
     [
-        Button(label='Изменить название', custom_id='change_title',
-               disabled=True)
+        Button(label='Название', custom_id='change_title'),
+        Button(label='Описание', custom_id='change_description'),
+        Button(label='Вопросы', custom_id='change_questions')
     ],
     [
-        Button(label='Добавить описание', custom_id='add_description',
-               disabled=True),
-        Button(label='Изменить описание', custom_id='change_description',
-               disabled=True),
-        Button(label='Удалить описание', custom_id='del_description',
-               disabled=True)
-    ],
+        Button(label='Опубликовать', style=ButtonStyle.green,
+               custom_id='published_quiz'),
+        Button(label='Удалить', style=ButtonStyle.red, custom_id='del_quiz')
+    ]
+]
+keyboard_published = [
     [
-        Button(label='Добавить вопрос', custom_id='add_question',
-               disabled=True),
-        Button(label='Изменить вопрос', custom_id='change_question',
-               disabled=True),
-        Button(label='Удалить вопрос', custom_id='del_question',
-               disabled=True)
+        Button(label='Снять с публикации', style=ButtonStyle.blue,
+               custom_id='unpublished_quiz'),
+        Button(label='Удалить', style=ButtonStyle.red, custom_id='del_quiz')
     ]
 ]
 
@@ -37,7 +34,8 @@ class ChangeQuiz(Embed):
         quiz = get_quiz(quiz_id)
         questions = get_quiz_questions(quiz_id)
         questions_list = '\n'.join(
-            f'{i}) {question.text if question.text else NULL_QUESTION_TEXT}'
+            f'{i + 1}) '
+            f'{question.text if question.text else NULL_QUESTION_TEXT}'
             for i, question in enumerate(questions))
         self.title = quiz.title if quiz.title else NULL_QUIZ_TITLE
         self.description = quiz.description

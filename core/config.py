@@ -7,3 +7,4 @@ DATABASE_URL = os.environ['DATABASE_URL']
 VERSION = os.environ['VERSION']
 BOT_ID = os.environ['BOT_ID']
 BOT_TOKEN = os.environ['BOT_TOKEN']
+DEVELOPERS_ID = eval(os.environ['DEVELOPERS_ID'])

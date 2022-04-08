@@ -3,8 +3,10 @@ from discord.ext.commands import Bot, Context
 from discord_components import DiscordComponents, Interaction
 
 import embeds
+from core.config import BOT_ID, DEVELOPERS_ID
 from core.button_parser import button_parser
 from data.quiz_func import add_quiz
+from data.admin_func import delete_empty_quizzes
 
 intents = Intents.default()
 intents.members = True
@@ -79,6 +81,8 @@ async def create_quiz(ctx: Context):
 
 @client.command(name='мои')
 async def get_user_quizzes(ctx: Context, ctx2):
+    if ctx2 != 'квизы':
+        return
     if ctx.guild:
         await ctx.channel.send(embed=await embeds.UserQuizzes(ctx.author.id,
                                                               ctx.author.name,
@@ -87,3 +91,25 @@ async def get_user_quizzes(ctx: Context, ctx2):
         await ctx.author.send(embed=await embeds.UserQuizzes(ctx.author.id,
                                                              ctx.author.name,
                                                              client=client))
+
+
+# ADMIN COMMANDS
+@client.command(name='очистить')
+async def del_empty_quizzes(ctx: Context, ctx2):
+    if ctx.author.id not in DEVELOPERS_ID:
+        msg = 'Эта команда доступна только разработчикам'
+        if ctx.guild:
+            await ctx.channel.send(msg)
+        else:
+            await ctx.author.send(msg)
+        return
+    match ctx2:
+        case 'квизы':
+            msg = f'Мусор вынесен, полы вымыты, квизы очищены\n' \
+                  f'Ваш <@{BOT_ID}>'
+            delete_empty_quizzes()
+            await ctx.message.add_reaction('✅')
+            if ctx.guild:
+                await ctx.channel.send(msg)
+            else:
+                await ctx.author.send(msg)

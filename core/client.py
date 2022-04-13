@@ -3,7 +3,7 @@ from discord.ext.commands import Bot, Context
 from discord_components import DiscordComponents, Interaction
 
 import embeds
-from core.config import BOT_ID, DEVELOPERS_ID
+from core.config import DEVELOPERS_ID
 from core.button_parser import button_parser
 from data.quiz_func import add_quiz
 from data.admin_func import delete_empty_quizzes
@@ -81,16 +81,22 @@ async def create_quiz(ctx: Context):
 
 @client.command(name='мои')
 async def get_user_quizzes(ctx: Context, ctx2):
-    if ctx2 != 'квизы':
-        return
-    if ctx.guild:
-        await ctx.channel.send(embed=await embeds.UserQuizzes(ctx.author.id,
-                                                              ctx.author.name,
-                                                              ctx.guild.id))
-    else:
-        await ctx.author.send(embed=await embeds.UserQuizzes(ctx.author.id,
-                                                             ctx.author.name,
-                                                             client=client))
+    match ctx2:
+        case 'квизы':
+            if ctx.guild:
+                await ctx.channel.send(
+                    embed=await embeds.UserQuizzes(ctx.author.id,
+                                                   ctx.author.name,
+                                                   ctx.guild.id))
+            else:
+                await ctx.author.send(
+                    embed=await embeds.UserQuizzes(ctx.author.id,
+                                                   ctx.author.name,
+                                                   client=client))
+
+
+# @client.command(name='квиз')
+# async def show_quiz(ctx: Context, param):
 
 
 # ADMIN COMMANDS
@@ -105,11 +111,5 @@ async def del_empty_quizzes(ctx: Context, ctx2):
         return
     match ctx2:
         case 'квизы':
-            msg = f'Мусор вынесен, полы вымыты, квизы очищены\n' \
-                  f'Ваш <@{BOT_ID}>'
             delete_empty_quizzes()
             await ctx.message.add_reaction('✅')
-            if ctx.guild:
-                await ctx.channel.send(msg)
-            else:
-                await ctx.author.send(msg)

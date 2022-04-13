@@ -1,5 +1,6 @@
 from data import db_session
 from data.models.questions import Question
+from data.models.quizzes import Quiz
 
 
 def add_question(quiz_id):
@@ -15,6 +16,10 @@ def add_question(quiz_id):
     db_sess.add(question)
     db_sess.flush()
     db_sess.refresh(question)
+
+    quiz = db_sess.query(Quiz).filter(Quiz.id == quiz_id).first()
+    quiz.questions.append(question.id)
+
     db_sess.commit()
     return question.id
 

@@ -1,10 +1,13 @@
 from transitions import Machine
 
 
-class QuizDetector(object):
+STATE_MACHINE = {}  # author_id: machine
+
+
+class QuizcordStateMachine(object):
     states = [
-        'quiz_set_server'
-        
+        'quiz_set_server',
+
         'quiz_edit', 'quiz_set_title', 'quiz_set_description',
 
         'question_select', 'question_edit', 'question_set_text',
@@ -12,28 +15,31 @@ class QuizDetector(object):
         'question_set_answers'
     ]
 
-    def __init__(self, quiz_id=None, question_id=None):
-        self.quiz_id = quiz_id
-        self.question_id = question_id
+    def __init__(self, initial):
+        assert initial in QuizcordStateMachine.states, \
+            f'Состояния {initial} не существует'
+        self.quiz_id = None
+        self.question_id = None
+        self.servers = []
+        self.server_name = None
 
-        self.machine = Machine(model=self, states=QuizDetector.states,
-                               initial='quiz_edit')
-
-        self.machine.add_transition(trigger='edit_quiz_server',
-                                    source='quiz_set_server',
-                                    dest='quiz_edit')
+        self.machine = Machine(
+            model=self,
+            states=QuizcordStateMachine.states,
+            initial=initial
+        )
 
         self.machine.add_transition(trigger='edit_quiz_title',
                                     source='quiz_edit',
                                     dest='quiz_set_title')
-        self.machine.add_transition(trigger='edit_quiz_title',
+        self.machine.add_transition(trigger='quiz_title_changed',
                                     source='quiz_set_title',
                                     dest='quiz_edit')
 
         self.machine.add_transition(trigger='edit_quiz_description',
                                     source='quiz_edit',
                                     dest='quiz_set_description')
-        self.machine.add_transition(trigger='edit_quiz_description',
+        self.machine.add_transition(trigger='quiz_description_changed',
                                     source='quiz_set_description',
                                     dest='quiz_edit')
 
@@ -70,27 +76,28 @@ class QuizDetector(object):
         self.machine.add_transition(trigger='edit_question_text',
                                     source='question_edit',
                                     dest='question_set_text')
-        self.machine.add_transition(trigger='edit_question_text',
+        self.machine.add_transition(trigger='complete_edit_question_text',
                                     source='question_set_text',
                                     dest='question_edit')
 
         self.machine.add_transition(trigger='edit_question_explanation',
                                     source='question_edit',
                                     dest='question_set_explanation')
-        self.machine.add_transition(trigger='edit_question_explanation',
+        self.machine.add_transition(trigger=
+                                    'complete_edit_question_explanation',
                                     source='question_set_explanation',
                                     dest='question_edit')
 
         self.machine.add_transition(trigger='edit_question_media',
                                     source='question_edit',
                                     dest='question_set_media')
-        self.machine.add_transition(trigger='edit_question_media',
+        self.machine.add_transition(trigger='complete_edit_question_media',
                                     source='question_set_media',
                                     dest='question_edit')
 
         self.machine.add_transition(trigger='edit_question_answers',
                                     source='question_edit',
                                     dest='question_set_answers')
-        self.machine.add_transition(trigger='edit_question_answers',
+        self.machine.add_transition(trigger='complete_edit_question_answers',
                                     source='question_set_answers',
                                     dest='question_edit')

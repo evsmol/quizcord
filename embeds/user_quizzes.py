@@ -5,6 +5,13 @@ from core.strings import NULL_QUIZ_TITLE
 from data.quiz_func import get_user_quizzes
 
 
+async def get_guild_cached(guild_id, client):
+    if client.get_guild(guild_id) is None:
+        return await client.fetch_guild(guild_id)
+    else:
+        return client.get_guild(guild_id)
+
+
 async def UserQuizzes(user_id, user_name, server_id=None, client=None):
     embed = Embed()
     embed.colour = QuizcordColor
@@ -14,7 +21,7 @@ async def UserQuizzes(user_id, user_name, server_id=None, client=None):
     for quiz in user_quizzes:
         guild = None
         if quiz.server_id and not server_id:
-            guild = await client.fetch_guild(quiz.server_id)
+            guild = await get_guild_cached(quiz.server_id, client)
         default_title = quiz.title if quiz.title else NULL_QUIZ_TITLE
         quizzes_list.append(
             f'`[{quiz.id}]` '

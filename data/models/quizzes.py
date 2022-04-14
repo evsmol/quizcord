@@ -8,7 +8,7 @@ class Quiz(SqlAlchemyBase):
     id = sqlalchemy.Column(sqlalchemy.Integer,
                            primary_key=True, autoincrement=True)
     title = sqlalchemy.Column(sqlalchemy.VARCHAR(length=200))
-    description = sqlalchemy.Column(sqlalchemy.VARCHAR(length=2048))
+    description = sqlalchemy.Column(sqlalchemy.VARCHAR(length=2000))
     server_id = sqlalchemy.Column(sqlalchemy.BIGINT)
     author_id = sqlalchemy.Column(sqlalchemy.BIGINT, nullable=False)
     players = sqlalchemy.Column(sqlalchemy.JSON)

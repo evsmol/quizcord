@@ -61,7 +61,7 @@ async def create_quiz(ctx: Context):
     try:
         await ctx.author.send('Создаю новый квиз...')
         await ctx.author.send('*Учтите, что пустой квиз может быть удалён '
-                              'при проверке модератором!ඞ*')
+                              'при проверке модератором!*')
         if ctx.guild:
             await ctx.message.add_reaction('📨')
             quiz_id = add_quiz(ctx.author.id, ctx.guild.id)
@@ -145,15 +145,16 @@ async def on_message(message: Message):
                     if 0 < int(message.content) <= len(user.servers):
                         server = user.servers[int(message.content) - 1]
 
-                        update_quiz(user.quiz_id, server_id=server.id)
+                        quiz_id = add_quiz(message.author.id, server.id)
+                        STATE_MACHINE[message.author.id].quiz_id = quiz_id
                         await message.author.send(
                             f'Вы выбрали сервер **{server.name}**'
                         )
                         await message.author.send(
-                            embed=embeds.ViewQuiz(user.quiz_id, server.name,
+                            embed=embeds.ViewQuiz(quiz_id, server.name,
                                                   message.author.id),
                             components=embeds.ViewQuiz(
-                                user.quiz_id,
+                                quiz_id,
                                 server.name,
                                 message.author.id
                             ).keyboard

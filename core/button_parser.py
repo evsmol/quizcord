@@ -48,8 +48,11 @@ async def button_parser(interaction: Interaction):
 
             del_quiz(quiz_id)
 
-            message = f'Квиз удалён 😢'
-            await interaction.message.edit(embed=embeds.Notification(message),
+            message = 'Квиз удалён'
+            message2 = 'Чтобы создать новый квиз, воспользуйтесь командой ' \
+                       '`-создать`'
+            await interaction.message.edit(embed=embeds.Notification(message,
+                                                                     message2),
                                            components=[])
         case 'return_change_quiz':
             del STATE_MACHINE[interaction.author.id]

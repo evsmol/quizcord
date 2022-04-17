@@ -5,3 +5,4 @@ from .choose_server import ChooseServer
 from .user_quizzes import UserQuizzes
 from .view_quiz import ViewQuiz
 from .notification import Notification
+from .view_questions import ViewQuestions

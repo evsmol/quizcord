@@ -6,7 +6,8 @@ import embeds
 from core.config import DEVELOPERS_ID
 from core.button_parser import button_parser
 from core.state_machine import QuizcordStateMachine, STATE_MACHINE
-from data.quiz_func import add_quiz, update_quiz
+from data.quiz_func import add_quiz, update_quiz, get_server_quizzes, \
+    get_user_quizzes
 from data.admin_func import delete_empty_quizzes
 
 intents = Intents.default()
@@ -39,7 +40,7 @@ async def on_button_click(interaction: Interaction):
 
 # MESSAGES
 @client.command(name='квизы')
-async def get_server_quizzes(ctx: Context):
+async def get_quizzes_for_server(ctx: Context):
     if ctx.guild:
         await ctx.channel.send(embed=embeds.ServerQuizzes(ctx.guild.id))
 
@@ -95,7 +96,7 @@ async def create_quiz(ctx: Context):
 
 
 @client.command(name='мои')
-async def get_user_quizzes(ctx: Context, ctx2):
+async def get_quizzes_by_uzer(ctx: Context, ctx2):
     match ctx2:
         case 'квизы':
             if ctx.guild:
@@ -108,6 +109,50 @@ async def get_user_quizzes(ctx: Context, ctx2):
                     embed=await embeds.UserQuizzes(ctx.author.id,
                                                    ctx.author.name,
                                                    client=client))
+
+
+@client.command(name='квиз')
+async def get_quiz(ctx: Context, *quiz_id):
+    if not quiz_id:
+        msg = 'Отсутствует номер квиза'
+        if ctx.guild:
+            await ctx.channel.send(msg)
+        else:
+            await ctx.author.send(msg)
+    elif not quiz_id[0].isdigit() or len(quiz_id) > 1:
+        msg = 'Введён некорректный номер квиза'
+        if ctx.guild:
+            await ctx.channel.send(msg)
+        else:
+            await ctx.author.send(msg)
+    elif ctx.guild:
+        quiz_id = int(quiz_id[0])
+        server_quizzes = get_server_quizzes(ctx.guild.id)
+        quizzes_id = [quiz.id for quiz in server_quizzes]
+        if quiz_id in quizzes_id:
+            await ctx.channel.send(
+                embed=embeds.ViewQuiz(quiz_id, ctx.guild.name,
+                                      ctx.author.id, is_server=True),
+                components=embeds.ViewQuiz(quiz_id, ctx.guild.name,
+                                           ctx.author.id,
+                                           is_server=True).keyboard)
+        else:
+            await ctx.channel.send('Нет доступа к квизу')
+    else:
+        quiz_id = int(quiz_id[0])
+        quizzes_list = get_user_quizzes(ctx.author.id)
+        quizzes_id = [quiz.id for quiz in quizzes_list]
+        quizzes_server_id = [quiz.server_id for quiz in quizzes_list]
+        if quiz_id in quizzes_id:
+            server = client.get_guild(
+                quizzes_server_id[quizzes_id.index(quiz_id)])
+            await ctx.author.send(
+                    embed=embeds.ViewQuiz(quiz_id, server.name,
+                                          ctx.author.id),
+                    components=embeds.ViewQuiz(quiz_id, server.name,
+                                               ctx.author.id).keyboard)
+        else:
+            await ctx.author.send('Нет доступа к квизу')
 
 
 @client.command(name='отмена')
@@ -209,7 +254,14 @@ async def on_message(message: Message):
 
 # ADMIN COMMANDS
 @client.command(name='очистить')
-async def del_empty_quizzes(ctx: Context, ctx2):
+async def del_empty_quizzes(ctx: Context, ctx2=None):
+    if not ctx2:
+        msg = 'Уточните, очистку каких компонентов необходимо выполнить'
+        if ctx.guild:
+            await ctx.channel.send(msg)
+        else:
+            await ctx.author.send(msg)
+        return
     if ctx.author.id not in DEVELOPERS_ID:
         msg = 'Эта команда доступна только разработчикам'
         if ctx.guild:

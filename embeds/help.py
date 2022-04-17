@@ -16,8 +16,10 @@ class Help(Embed):
         if guild:
             self.description = '-создать*\n' \
                                '-квизы\n' \
-                               '-мои квизы*'
+                               '-мои квизы*\n' \
+                               '-квиз id*'
         else:
             self.description = '-создать*\n' \
-                               '-мои квизы*'
+                               '-мои квизы*\n' \
+                               '-квиз id*'
         self.colour = QuizcordColor

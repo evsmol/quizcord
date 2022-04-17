@@ -27,18 +27,21 @@ def get_quiz(quiz_id):
 
 def get_server_quizzes(server_id):
     db_sess = db_session.create_session()
-    quizzes = db_sess.query(Quiz).filter(Quiz.server_id == server_id,
-                                         Quiz.publication == True)
+    quizzes = db_sess.query(Quiz).filter(
+        Quiz.server_id == server_id,
+        Quiz.publication == True).order_by(Quiz.id).all()
     return quizzes
 
 
 def get_user_quizzes(user_id, server_id=None):
     db_sess = db_session.create_session()
     if server_id:
-        quizzes = db_sess.query(Quiz).filter(Quiz.author_id == user_id,
-                                             Quiz.server_id == server_id)
+        quizzes = db_sess.query(Quiz).filter(
+            Quiz.author_id == user_id, Quiz.server_id ==
+            server_id).order_by(Quiz.id).all()
     else:
-        quizzes = db_sess.query(Quiz).filter(Quiz.author_id == user_id)
+        quizzes = db_sess.query(Quiz).filter(
+            Quiz.author_id == user_id).order_by(Quiz.id).all()
     return quizzes
 
 

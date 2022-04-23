@@ -2,10 +2,11 @@ from discord_components import Interaction
 
 import embeds
 from core.state_machine import QuizcordStateMachine, STATE_MACHINE
-from data.quiz_func import update_quiz, del_quiz
+from data.quiz_func import update_quiz, del_quiz, get_quiz
+from data.question_func import add_question, del_question
 
 
-async def button_parser(interaction: Interaction):
+async def button_parser(interaction: Interaction, client):
     await interaction.respond(type=6)
 
     command, parameters = interaction.custom_id.split(':')
@@ -13,12 +14,19 @@ async def button_parser(interaction: Interaction):
     match command:
         case 'quiz_edit':
             quiz_id, server_name = parameters.split(',')
+
+            embed, keyboard = await embeds.embed_change_quiz(
+                quiz_id,
+                client
+            )
+
             await interaction.message.edit(
-                embed=embeds.ChangeQuiz(quiz_id, server_name),
-                components=embeds.ChangeQuiz(int(quiz_id),
-                                             server_name).keyboard)
+                embed=embed,
+                components=keyboard
+            )
             STATE_MACHINE[interaction.author.id] = QuizcordStateMachine(
                 initial='quiz_edit')
+            STATE_MACHINE[interaction.author.id].quiz_id = quiz_id
         case 'published_quiz':
             del STATE_MACHINE[interaction.author.id]
 
@@ -26,21 +34,24 @@ async def button_parser(interaction: Interaction):
 
             update_quiz(quiz_id, publication=True)
 
+            view_quiz = embeds.ViewQuiz(int(quiz_id), server_name,
+                                        interaction.author.id)
             await interaction.message.edit(
-                embed=embeds.ViewQuiz(int(quiz_id), server_name,
-                                      interaction.author.id),
-                components=embeds.ViewQuiz(int(quiz_id),
-                                           server_name,
-                                           interaction.author.id).keyboard)
+                embed=view_quiz,
+                components=view_quiz.keyboard
+            )
         case 'unpublished_quiz':
             quiz_id, server_name = parameters.split(',')
 
             update_quiz(quiz_id, publication=False, players=[])
 
+            embed, keyboard = await embeds.embed_change_quiz(
+                int(quiz_id),
+                client
+            )
             await interaction.message.edit(
-                embed=embeds.ChangeQuiz(int(quiz_id), server_name),
-                components=embeds.ChangeQuiz(int(quiz_id),
-                                             server_name).keyboard)
+                embed=embed,
+                components=keyboard)
         case 'del_quiz':
             del STATE_MACHINE[interaction.author.id]
 
@@ -51,40 +62,321 @@ async def button_parser(interaction: Interaction):
             message = 'Квиз удалён'
             message2 = 'Чтобы создать новый квиз, воспользуйтесь командой ' \
                        '`-создать`'
-            await interaction.message.edit(embed=embeds.Notification(message,
-                                                                     message2),
-                                           components=[])
+            await interaction.message.edit(
+                embed=embeds.Notification(message, message2),
+                components=[]
+            )
         case 'return_change_quiz':
             del STATE_MACHINE[interaction.author.id]
 
             quiz_id, server_name = parameters.split(',')
 
+            view_quiz = embeds.ViewQuiz(int(quiz_id), server_name,
+                                        interaction.author.id)
             await interaction.message.edit(
-                embed=embeds.ViewQuiz(int(quiz_id), server_name,
-                                      interaction.author.id),
-                components=embeds.ViewQuiz(int(quiz_id),
-                                           server_name,
-                                           interaction.author.id).keyboard)
+                embed=view_quiz,
+                components=view_quiz.keyboard
+            )
         case 'change_title':
             STATE_MACHINE[interaction.author.id].edit_quiz_title()
 
             quiz_id, server_name = parameters.split(',')
             STATE_MACHINE[interaction.author.id].quiz_id = int(quiz_id)
-            STATE_MACHINE[interaction.author.id].server_name = server_name
 
             message = 'Изменение названия'
             message2 = 'Отправьте новое название для квиза'
-            await interaction.message.edit(embed=embeds.Notification(
-                message, message2), components=[])
+            await interaction.message.edit(
+                embed=embeds.Notification(message, message2),
+                components=[]
+            )
         case 'change_description':
             STATE_MACHINE[interaction.author.id].edit_quiz_description()
 
             quiz_id, server_name = parameters.split(',')
             STATE_MACHINE[interaction.author.id].quiz_id = int(quiz_id)
-            STATE_MACHINE[interaction.author.id].server_name = server_name
 
             message = 'Изменение описания'
             message2 = 'Отправьте новое описание для квиза.\n' \
                        'Чтобы удалить описание, отправьте точку'
-            await interaction.message.edit(embed=embeds.Notification(
-                message, message2), components=[])
+            await interaction.message.edit(
+                embed=embeds.Notification(message, message2),
+                components=[]
+            )
+        case 'change_questions':
+            STATE_MACHINE[interaction.author.id].select_question()
+
+            question_id, number, quantity = parameters.split(',')
+
+            await interaction.message.delete()
+            msg_media = await interaction.author.send(
+                'Открываю редактор вопросов...'
+            )
+
+            STATE_MACHINE[interaction.author.id].msg_media = msg_media
+
+            questions = embeds.ViewQuestions(question_id, number, quantity)
+            await interaction.author.send(
+                embed=questions,
+                components=questions.keyboard
+            )
+            if questions.media:
+                await msg_media.edit(questions.media)
+            else:
+                await msg_media.edit('ᅠ')
+        case 'questions_left':
+            number_question = int(parameters)
+
+            quiz_id = STATE_MACHINE[interaction.author.id].quiz_id
+            quiz = get_quiz(quiz_id)
+            questions = quiz.questions
+
+            quantity = len(questions)
+            if number_question > 1:
+                question_id = questions[number_question - 2]
+                number = number_question - 1
+                embed = embeds.ViewQuestions(question_id, number, quantity)
+            elif number_question == 1:
+                question_id = questions[-1]
+                number = quantity
+                embed = embeds.ViewQuestions(question_id, number, quantity)
+
+            msg_media = STATE_MACHINE[interaction.author.id].msg_media
+            if embed.media:
+                await msg_media.edit(embed.media)
+            else:
+                await msg_media.edit('ᅠ')
+
+            await interaction.message.edit(
+                embed=embed,
+                components=embed.keyboard
+            )
+        case 'questions_right':
+            number_question = int(parameters)
+
+            quiz_id = STATE_MACHINE[interaction.author.id].quiz_id
+            quiz = get_quiz(quiz_id)
+            questions = quiz.questions
+
+            quantity = len(questions)
+            if number_question < quantity:
+                question_id = questions[number_question]
+                number = number_question + 1
+                embed = embeds.ViewQuestions(question_id, number, quantity)
+            elif number_question == quantity:
+                question_id = questions[0]
+                number = 1
+                embed = embeds.ViewQuestions(question_id, number, quantity)
+
+            msg_media = STATE_MACHINE[interaction.author.id].msg_media
+            if embed.media:
+                await msg_media.edit(embed.media)
+            else:
+                await msg_media.edit('ᅠ')
+
+            await interaction.message.edit(
+                embed=embed,
+                components=embed.keyboard
+            )
+        case 'question_edit':
+            STATE_MACHINE[interaction.author.id].edit_question()
+
+            question_id, number, quantity = parameters.split(',')
+
+            questions = embeds.ChangeQuestion(question_id, number, quantity)
+            await interaction.message.edit(
+                embed=questions,
+                components=questions.keyboard
+            )
+        case 'add_question':
+            quantity = int(parameters)
+            quiz_id = STATE_MACHINE[interaction.author.id].quiz_id
+
+            question_id = add_question(quiz_id)
+
+            questions = embeds.ViewQuestions(question_id, quantity + 1,
+                                             quantity + 1)
+
+            msg_media = STATE_MACHINE[interaction.author.id].msg_media
+            await msg_media.edit('ᅠ')
+
+            await interaction.message.edit(
+                embed=questions,
+                components=questions.keyboard
+            )
+        case 'questions_return':
+            STATE_MACHINE[interaction.author.id].select_question_return()
+            quiz_id = STATE_MACHINE[interaction.author.id].quiz_id
+
+            embed, keyboard = await embeds.embed_change_quiz(
+                quiz_id,
+                client
+            )
+
+            msg_media = STATE_MACHINE[interaction.author.id].msg_media
+            await msg_media.delete()
+
+            await interaction.message.edit(
+                embed=embed,
+                components=keyboard
+            )
+        case 'question_up':
+            question_id, number, quantity = map(int, parameters.split(','))
+
+            quiz_id = STATE_MACHINE[interaction.author.id].quiz_id
+            quiz = get_quiz(quiz_id)
+            questions = quiz.questions
+
+            if number < quantity:
+                questions[number - 1], questions[number] = \
+                    questions[number], questions[number - 1]
+                number = number + 1
+            elif number == quantity:
+                questions[number - 1], questions[0] = \
+                    questions[0], questions[number - 1]
+                number = 1
+
+            update_quiz(quiz_id, questions=questions)
+
+            embed = embeds.ChangeQuestion(question_id, number, quantity)
+            await interaction.message.edit(
+                embed=embed,
+                components=embed.keyboard
+            )
+        case 'question_down':
+            question_id, number, quantity = map(int, parameters.split(','))
+
+            quiz_id = STATE_MACHINE[interaction.author.id].quiz_id
+            quiz = get_quiz(quiz_id)
+            questions = quiz.questions
+
+            if number > 1:
+                questions[number - 1], questions[number - 2] = \
+                    questions[number - 2], questions[number - 1]
+                number = number - 1
+            elif number == 1:
+                questions[number - 1], questions[-1] = \
+                    questions[-1], questions[number - 1]
+                number = quantity
+
+            update_quiz(quiz_id, questions=questions)
+
+            embed = embeds.ChangeQuestion(question_id, number, quantity)
+            await interaction.message.edit(
+                embed=embed,
+                components=embed.keyboard
+            )
+        case 'question_del':
+            STATE_MACHINE[interaction.author.id].edit_question_delete()
+
+            question_id, number, quantity = map(int, parameters.split(','))
+
+            del_question(question_id)
+
+            quiz_id = STATE_MACHINE[interaction.author.id].quiz_id
+            quiz = get_quiz(quiz_id)
+            questions = quiz.questions
+
+            if number < quantity:
+                question_id = questions[number - 1]
+            elif number == quantity:
+                question_id = questions[number - 2]
+                number -= 1
+
+            questions = embeds.ViewQuestions(question_id, number, quantity - 1)
+            await interaction.message.edit(
+                embed=questions,
+                components=questions.keyboard
+            )
+        case 'question_text':
+            STATE_MACHINE[interaction.author.id].edit_question_text()
+
+            question_id, number, quantity = map(int, parameters.split(','))
+            STATE_MACHINE[interaction.author.id].question_id = question_id
+            STATE_MACHINE[interaction.author.id].question_number = number
+            STATE_MACHINE[interaction.author.id].question_quantity = quantity
+
+            msg_media = STATE_MACHINE[interaction.author.id].msg_media
+            await msg_media.delete()
+
+            message = 'Изменение текста вопроса'
+            message2 = 'Отправьте новый текст для вопроса'
+            await interaction.message.edit(
+                embed=embeds.Notification(message, message2),
+                components=[]
+            )
+        case 'question_explanation':
+            STATE_MACHINE[interaction.author.id].edit_question_explanation()
+
+            question_id, number, quantity = map(int, parameters.split(','))
+            STATE_MACHINE[interaction.author.id].question_id = question_id
+            STATE_MACHINE[interaction.author.id].question_number = number
+            STATE_MACHINE[interaction.author.id].question_quantity = quantity
+
+            msg_media = STATE_MACHINE[interaction.author.id].msg_media
+            await msg_media.delete()
+
+            message = 'Изменение пояснения'
+            message2 = 'Отправьте новое пояснение для вопроса.\n' \
+                       'Чтобы удалить пояснение, отправьте точку'
+            await interaction.message.edit(
+                embed=embeds.Notification(message, message2),
+                components=[]
+            )
+        case 'questions_answers':
+            STATE_MACHINE[interaction.author.id].edit_question_answers()
+
+            question_id, number, quantity = map(int, parameters.split(','))
+            STATE_MACHINE[interaction.author.id].question_id = question_id
+            STATE_MACHINE[interaction.author.id].question_number = number
+            STATE_MACHINE[interaction.author.id].question_quantity = quantity
+
+            msg_media = STATE_MACHINE[interaction.author.id].msg_media
+            await msg_media.delete()
+
+            message = 'Изменение вариантов ответов'
+            message2 = 'Отправьте варианты ответов на вопрос в следующем ' \
+                       'формате:\n' \
+                       'В одной строке — один вариант ответа. Всего ' \
+                       'может быть от 1 до 5 вариантов.\n ' \
+                       'Для отметки верного варианта ответов поставьте ' \
+                       'вплотную перед началом символ `+`.\n' \
+                       'Для переноса строки используйте комбинацию клавиш ' \
+                       '`Shift + Enter`.\n\n' \
+                       '**Пример сообщения:**\n' \
+                       '```Да, является\n' \
+                       '+Нет, не является\n' \
+                       'Иногда```'
+            await interaction.message.edit(
+                embed=embeds.Notification(message, message2),
+                components=[]
+            )
+        case 'question_media':
+            STATE_MACHINE[interaction.author.id].edit_question_media()
+
+            question_id, number, quantity = map(int, parameters.split(','))
+            STATE_MACHINE[interaction.author.id].question_id = question_id
+            STATE_MACHINE[interaction.author.id].question_number = number
+            STATE_MACHINE[interaction.author.id].question_quantity = quantity
+
+            msg_media = STATE_MACHINE[interaction.author.id].msg_media
+            await msg_media.delete()
+
+            message = 'Изменение медиа'
+            message2 = 'Отправьте новый медиафайл для вопроса.\n' \
+                       'Чтобы удалить медиа, отправьте точку.\n' \
+                       '*Учтите, что аудиофайл участник будет вынужден ' \
+                       'скачать по ссылке*'
+            await interaction.message.edit(
+                embed=embeds.Notification(message, message2),
+                components=[]
+            )
+        case 'question_return':
+            STATE_MACHINE[interaction.author.id].edit_question_return()
+
+            question_id, number, quantity = parameters.split(',')
+
+            questions = embeds.ViewQuestions(question_id, number, quantity)
+            await interaction.message.edit(
+                embed=questions,
+                components=questions.keyboard
+            )

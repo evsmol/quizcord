@@ -2,17 +2,11 @@ from discord import Embed
 
 from core.colors import QuizcordColor
 from core.strings import NULL_QUIZ_TITLE
+from core.helpers import get_guild_cached
 from data.quiz_func import get_user_quizzes
 
 
-async def get_guild_cached(guild_id, client):
-    if client.get_guild(guild_id) is None:
-        return await client.fetch_guild(guild_id)
-    else:
-        return client.get_guild(guild_id)
-
-
-async def UserQuizzes(user_id, user_name, server_id=None, client=None):
+async def embed_user_quizzes(user_id, user_name, server_id=None, client=None):
     embed = Embed()
     embed.colour = QuizcordColor
 

@@ -8,6 +8,7 @@ from core.button_parser import button_parser
 from core.state_machine import QuizcordStateMachine, STATE_MACHINE
 from data.quiz_func import add_quiz, update_quiz, get_server_quizzes, \
     get_user_quizzes
+from data.question_func import update_question
 from data.admin_func import delete_empty_quizzes
 
 intents = Intents.default()
@@ -35,7 +36,7 @@ async def on_ready():
 @client.event
 async def on_button_click(interaction: Interaction):
     if not interaction.responded:
-        await button_parser(interaction)
+        await button_parser(interaction, client)
 
 
 # MESSAGES
@@ -66,20 +67,25 @@ async def create_quiz(ctx: Context):
         if ctx.guild:
             await ctx.message.add_reaction('📨')
             quiz_id = add_quiz(ctx.author.id, ctx.guild.id)
+
+            view_quiz = embeds.ViewQuiz(quiz_id, ctx.guild.name, ctx.author.id)
             await ctx.author.send(
-                embed=embeds.ViewQuiz(quiz_id, ctx.guild.name, ctx.author.id),
-                components=embeds.ViewQuiz(quiz_id, ctx.guild.name,
-                                           ctx.author.id).keyboard)
+                embed=view_quiz,
+                components=view_quiz.keyboard
+            )
 
         elif len(ctx.author.mutual_guilds) == 1:
             quiz_id = add_quiz(ctx.author.id, ctx.author.mutual_guilds[0].id)
+
+            view_quiz = embeds.ViewQuiz(
+                quiz_id,
+                ctx.author.mutual_guilds[0].name,
+                ctx.author.id
+            )
             await ctx.author.send(
-                embed=embeds.ViewQuiz(quiz_id,
-                                      ctx.author.mutual_guilds[0].name,
-                                      ctx.author.id),
-                components=embeds.ViewQuiz(quiz_id,
-                                           ctx.author.mutual_guilds[0].name,
-                                           ctx.author.id).keyboard)
+                embed=view_quiz,
+                components=view_quiz.keyboard
+            )
 
         else:
             STATE_MACHINE[ctx.author.id] = QuizcordStateMachine(
@@ -101,14 +107,14 @@ async def get_quizzes_by_uzer(ctx: Context, ctx2):
         case 'квизы':
             if ctx.guild:
                 await ctx.channel.send(
-                    embed=await embeds.UserQuizzes(ctx.author.id,
-                                                   ctx.author.name,
-                                                   ctx.guild.id))
+                    embed=await embeds.embed_user_quizzes(ctx.author.id,
+                                                          ctx.author.name,
+                                                          ctx.guild.id))
             else:
                 await ctx.author.send(
-                    embed=await embeds.UserQuizzes(ctx.author.id,
-                                                   ctx.author.name,
-                                                   client=client))
+                    embed=await embeds.embed_user_quizzes(ctx.author.id,
+                                                          ctx.author.name,
+                                                          client=client))
 
 
 @client.command(name='квиз')
@@ -130,12 +136,17 @@ async def get_quiz(ctx: Context, *quiz_id):
         server_quizzes = get_server_quizzes(ctx.guild.id)
         quizzes_id = [quiz.id for quiz in server_quizzes]
         if quiz_id in quizzes_id:
+
+            view_quiz = embeds.ViewQuiz(
+                quiz_id,
+                ctx.guild.name,
+                ctx.author.id,
+                is_server=True
+            )
             await ctx.channel.send(
-                embed=embeds.ViewQuiz(quiz_id, ctx.guild.name,
-                                      ctx.author.id, is_server=True),
-                components=embeds.ViewQuiz(quiz_id, ctx.guild.name,
-                                           ctx.author.id,
-                                           is_server=True).keyboard)
+                embed=view_quiz,
+                components=view_quiz.keyboard
+            )
         else:
             await ctx.channel.send('Нет доступа к квизу')
     else:
@@ -146,11 +157,12 @@ async def get_quiz(ctx: Context, *quiz_id):
         if quiz_id in quizzes_id:
             server = client.get_guild(
                 quizzes_server_id[quizzes_id.index(quiz_id)])
+
+            view_quiz = embeds.ViewQuiz(quiz_id, server.name, ctx.author.id)
             await ctx.author.send(
-                    embed=embeds.ViewQuiz(quiz_id, server.name,
-                                          ctx.author.id),
-                    components=embeds.ViewQuiz(quiz_id, server.name,
-                                               ctx.author.id).keyboard)
+                embed=view_quiz,
+                components=view_quiz.keyboard
+            )
         else:
             await ctx.author.send('Нет доступа к квизу')
 
@@ -195,14 +207,15 @@ async def on_message(message: Message):
                         await message.author.send(
                             f'Вы выбрали сервер **{server.name}**'
                         )
+
+                        view_quiz = embeds.ViewQuiz(
+                            quiz_id,
+                            server.name,
+                            message.author.id
+                        )
                         await message.author.send(
-                            embed=embeds.ViewQuiz(quiz_id, server.name,
-                                                  message.author.id),
-                            components=embeds.ViewQuiz(
-                                quiz_id,
-                                server.name,
-                                message.author.id
-                            ).keyboard
+                            embed=view_quiz,
+                            components=view_quiz.keyboard
                         )
                         del STATE_MACHINE[message.author.id]
                     else:
@@ -223,14 +236,17 @@ async def on_message(message: Message):
                 else:
                     STATE_MACHINE[message.author.id].quiz_title_changed()
                     quiz_id = STATE_MACHINE[message.author.id].quiz_id
-                    server_name = STATE_MACHINE[message.author.id].server_name
 
                     update_quiz(quiz_id, title=message.content)
 
+                    embed, keyboard = await embeds.embed_change_quiz(
+                        int(quiz_id),
+                        client
+                    )
                     await message.author.send(
-                        embed=embeds.ChangeQuiz(int(quiz_id), server_name),
-                        components=embeds.ChangeQuiz(int(quiz_id),
-                                                     server_name).keyboard)
+                        embed=embed,
+                        components=keyboard
+                    )
             case 'quiz_set_description':
                 if len(message.content) > 2000:
                     await message.author.send(
@@ -239,17 +255,167 @@ async def on_message(message: Message):
                 else:
                     STATE_MACHINE[message.author.id].quiz_description_changed()
                     quiz_id = STATE_MACHINE[message.author.id].quiz_id
-                    server_name = STATE_MACHINE[message.author.id].server_name
 
                     if message.content == '.':
                         update_quiz(quiz_id, description='')
                     else:
                         update_quiz(quiz_id, description=message.content)
 
+                    embed, keyboard = await embeds.embed_change_quiz(
+                        int(quiz_id),
+                        client
+                    )
                     await message.author.send(
-                        embed=embeds.ChangeQuiz(int(quiz_id), server_name),
-                        components=embeds.ChangeQuiz(int(quiz_id),
-                                                     server_name).keyboard)
+                        embed=embed,
+                        components=keyboard
+                    )
+            case 'question_set_text':
+                if len(message.content) > 200:
+                    await message.author.send(
+                        'Текст вопроса не должен превышать 200 символов. '
+                        'Пожалуйста, введите его повторно')
+                else:
+                    STATE_MACHINE[message.author.id].question_text_changed()
+                    question_id = STATE_MACHINE[message.author.id].question_id
+                    number = STATE_MACHINE[message.author.id].question_number
+                    quantity = \
+                        STATE_MACHINE[message.author.id].question_quantity
+
+                    update_question(question_id, text=message.content)
+
+                    embed = embeds.ChangeQuestion(question_id, number,
+                                                  quantity)
+
+                    msg_media = await message.author.send('ᅠ')
+                    STATE_MACHINE[message.author.id].msg_media = msg_media
+                    if embed.media:
+                        await msg_media.edit(embed.media)
+
+                    await message.author.send(
+                        embed=embed,
+                        components=embed.keyboard
+                    )
+            case 'question_set_explanation':
+                if len(message.content) > 2000:
+                    await message.author.send(
+                        'Пояснение не должно превышать 2000 символов. '
+                        'Пожалуйста, введите его повторно')
+                else:
+                    STATE_MACHINE[
+                        message.author.id].question_explanation_changed()
+                    question_id = STATE_MACHINE[message.author.id].question_id
+                    number = STATE_MACHINE[message.author.id].question_number
+                    quantity = \
+                        STATE_MACHINE[message.author.id].question_quantity
+
+                    if message.content == '.':
+                        update_question(
+                            question_id,
+                            explanation=''
+                        )
+                    else:
+                        update_question(
+                            question_id,
+                            explanation=message.content
+                        )
+
+                    embed = embeds.ChangeQuestion(question_id, number,
+                                                  quantity)
+
+                    msg_media = await message.author.send('ᅠ')
+                    STATE_MACHINE[message.author.id].msg_media = msg_media
+                    if embed.media:
+                        await msg_media.edit(embed.media)
+
+                    await message.author.send(
+                        embed=embed,
+                        components=embed.keyboard
+                    )
+            case 'question_set_media':
+                question_id = STATE_MACHINE[message.author.id].question_id
+                number = STATE_MACHINE[message.author.id].question_number
+                quantity = \
+                    STATE_MACHINE[message.author.id].question_quantity
+
+                try:
+                    if message.content == '.':
+                        update_question(
+                            question_id,
+                            media=''
+                        )
+                    else:
+                        update_question(
+                            question_id,
+                            media=message.attachments[0].proxy_url
+                        )
+
+                    STATE_MACHINE[message.author.id].question_media_changed()
+
+                    embed = embeds.ChangeQuestion(question_id, number,
+                                                  quantity)
+
+                    msg_media = await message.author.send('ᅠ')
+                    STATE_MACHINE[message.author.id].msg_media = msg_media
+                    if embed.media:
+                        await msg_media.edit(embed.media)
+
+                    await message.author.send(
+                        embed=embed,
+                        components=embed.keyboard
+                    )
+                except IndexError:
+                    await message.author.send(
+                        'Некорректный ввод. '
+                        'Пожалуйста, отправьте файл повторно'
+                    )
+            case 'question_set_answers':
+                answers = message.content.split('\n')
+                if len(answers) > 5:
+                    await message.author.send(
+                        'Вариантов ответов не может быть больше 5. '
+                        'Пожалуйста, введите их повторно')
+                    return
+
+                right_answer_count = 0
+                right_answer = None
+                for i, answer in enumerate(answers):
+                    if answer.startswith('+'):
+                        right_answer = i
+                        right_answer_count += 1
+                        answers[i] = answer.lstrip('+')
+
+                if right_answer_count == 0:
+                    await message.author.send(
+                        'Верный вариант ответа не указан. '
+                        'Пожалуйста, повторите ввод')
+                    return
+                if right_answer_count > 1:
+                    await message.author.send(
+                        'Указано несколько верных вариантов. '
+                        'Пожалуйста, повторите ввод')
+                    return
+
+                question_id = STATE_MACHINE[message.author.id].question_id
+                number = STATE_MACHINE[message.author.id].question_number
+                quantity = STATE_MACHINE[message.author.id].question_quantity
+
+                update_question(question_id,
+                                answers=answers,
+                                right_answer=right_answer)
+
+                STATE_MACHINE[message.author.id].question_answers_changed()
+
+                embed = embeds.ChangeQuestion(question_id, number, quantity)
+
+                msg_media = await message.author.send('ᅠ')
+                STATE_MACHINE[message.author.id].msg_media = msg_media
+                if embed.media:
+                    await msg_media.edit(embed.media)
+
+                await message.author.send(
+                    embed=embed,
+                    components=embed.keyboard
+                )
 
 
 # ADMIN COMMANDS

@@ -19,9 +19,13 @@ class QuizcordStateMachine(object):
         assert initial in QuizcordStateMachine.states, \
             f'Состояния {initial} не существует'
         self.quiz_id = None
-        self.question_id = None
         self.servers = []
         self.server_name = None
+
+        self.question_id = None
+        self.question_number = None
+        self.question_quantity = None
+        self.msg_media = None
 
         self.machine = Machine(
             model=self,
@@ -46,24 +50,12 @@ class QuizcordStateMachine(object):
         self.machine.add_transition(trigger='select_question',
                                     source='quiz_edit',
                                     dest='question_select')
-        self.machine.add_transition(trigger='select_question_left',
-                                    source='question_select',
-                                    dest='question_select')
-        self.machine.add_transition(trigger='select_question_right',
-                                    source='question_select',
-                                    dest='question_select')
         self.machine.add_transition(trigger='select_question_return',
                                     source='question_select',
                                     dest='quiz_edit')
 
         self.machine.add_transition(trigger='edit_question',
                                     source='question_select',
-                                    dest='question_edit')
-        self.machine.add_transition(trigger='edit_question_up',
-                                    source='question_edit',
-                                    dest='question_edit')
-        self.machine.add_transition(trigger='edit_question_down',
-                                    source='question_edit',
                                     dest='question_edit')
 
         self.machine.add_transition(trigger='edit_question_delete',
@@ -76,28 +68,27 @@ class QuizcordStateMachine(object):
         self.machine.add_transition(trigger='edit_question_text',
                                     source='question_edit',
                                     dest='question_set_text')
-        self.machine.add_transition(trigger='complete_edit_question_text',
+        self.machine.add_transition(trigger='question_text_changed',
                                     source='question_set_text',
                                     dest='question_edit')
 
         self.machine.add_transition(trigger='edit_question_explanation',
                                     source='question_edit',
                                     dest='question_set_explanation')
-        self.machine.add_transition(trigger=
-                                    'complete_edit_question_explanation',
+        self.machine.add_transition(trigger='question_explanation_changed',
                                     source='question_set_explanation',
                                     dest='question_edit')
 
         self.machine.add_transition(trigger='edit_question_media',
                                     source='question_edit',
                                     dest='question_set_media')
-        self.machine.add_transition(trigger='complete_edit_question_media',
+        self.machine.add_transition(trigger='question_media_changed',
                                     source='question_set_media',
                                     dest='question_edit')
 
         self.machine.add_transition(trigger='edit_question_answers',
                                     source='question_edit',
                                     dest='question_set_answers')
-        self.machine.add_transition(trigger='complete_edit_question_answers',
+        self.machine.add_transition(trigger='question_answers_changed',
                                     source='question_set_answers',
                                     dest='question_edit')

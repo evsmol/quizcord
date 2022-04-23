@@ -1,6 +1,6 @@
 from data import db_session
 from data.models.questions import Question
-from data.models.quizzes import Quiz
+from data.quiz_func import update_quiz, get_quiz
 
 
 def add_question(quiz_id):
@@ -17,24 +17,44 @@ def add_question(quiz_id):
     db_sess.flush()
     db_sess.refresh(question)
 
-    quiz = db_sess.query(Quiz).filter(Quiz.id == quiz_id).first()
+    # UPDATE QUIZ
+    quiz = get_quiz(quiz_id)
     quiz.questions.append(question.id)
+    update_quiz(quiz_id, questions=quiz.questions)
 
     db_sess.commit()
-    return question.id
+    try:
+        return question.id
+    finally:
+        db_sess.close()
 
 
 def get_question(question_id):
     db_sess = db_session.create_session()
     question = db_sess.query(Question).filter(Question.id ==
                                               question_id).first()
-    return question
+    try:
+        return question
+    finally:
+        db_sess.close()
 
 
 def del_question(question_id):
     db_sess = db_session.create_session()
+
+    question = db_sess.query(Question).filter(Question.id ==
+                                              question_id).first()
+    quiz_id = question.quiz_id
+
     db_sess.query(Question).filter(Question.id == question_id).delete()
+
+    # UPDATE QUIZ
+    quiz = get_quiz(quiz_id)
+    del quiz.questions[quiz.questions.index(question_id)]
+    update_quiz(quiz_id, questions=quiz.questions)
+
     db_sess.commit()
+    db_sess.close()
 
 
 def update_question(question_id, text=None, explanation=None, answers=None,
@@ -44,12 +64,19 @@ def update_question(question_id, text=None, explanation=None, answers=None,
                                               question_id).first()
     if text:
         question.text = text
-    if explanation:
-        question.explanation = explanation
+    if explanation is not None:
+        if explanation == '':
+            question.explanation = None
+        else:
+            question.explanation = explanation
     if answers:
         question.answers = answers
     if right_answer:
         question.right_answer = right_answer
-    if media:
-        question.media = media
+    if media is not None:
+        if media == '':
+            question.media = None
+        else:
+            question.media = media
     db_sess.commit()
+    db_sess.close()

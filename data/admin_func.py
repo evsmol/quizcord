@@ -1,4 +1,5 @@
 from data import db_session
+from data.quiz_func import del_quiz
 from data.models.quizzes import Quiz
 from data.models.questions import Question
 
@@ -10,7 +11,12 @@ def delete_empty_quizzes():
     if questions:
         for question in questions:
             quizzes_id.append(question.quiz_id)
-        db_sess.query(Quiz).filter(Quiz.quiz_id not in quizzes_id).delete()
+        quizzes = db_sess.query(Quiz).filter(Quiz.id not in quizzes_id).all()
+        for quiz in quizzes:
+            del_quiz(quiz.id)
     else:
-        db_sess.query(Quiz).filter(Quiz.id >= 0).delete()
+        quizzes = db_sess.query(Quiz).filter(Quiz.id >= 0).all()
+        for quiz in quizzes:
+            del_quiz(quiz.id)
     db_sess.commit()
+    db_sess.close()

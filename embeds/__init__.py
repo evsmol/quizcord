@@ -9,3 +9,4 @@ from .view_questions import ViewQuestions
 from .change_question import ChangeQuestion
 from .game_question import GameQuestion
 from .end_game import EndGame
+from .quiz_rating import QuizRating

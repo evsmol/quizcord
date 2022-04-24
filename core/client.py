@@ -167,6 +167,32 @@ async def get_quiz(ctx: Context, *quiz_id):
             await ctx.author.send('Нет доступа к квизу')
 
 
+@client.command(name='рейтинг')
+async def get_quiz(ctx: Context, *quiz_id):
+    if not quiz_id:
+        msg = 'Отсутствует номер квиза'
+        if ctx.guild:
+            await ctx.channel.send(msg)
+        else:
+            await ctx.author.send(msg)
+    elif not quiz_id[0].isdigit() or len(quiz_id) > 1:
+        msg = 'Введён некорректный номер квиза'
+        if ctx.guild:
+            await ctx.channel.send(msg)
+        else:
+            await ctx.author.send(msg)
+    elif ctx.guild:
+        quiz_id = int(quiz_id[0])
+        server_quizzes = get_server_quizzes(ctx.guild.id)
+        quizzes_id = [quiz.id for quiz in server_quizzes]
+        if quiz_id in quizzes_id:
+            await ctx.channel.send(
+                embed=embeds.QuizRating(quiz_id),
+            )
+        else:
+            await ctx.channel.send('Нет доступа к квизу')
+
+
 @client.command(name='отмена')
 async def cancel(ctx: Context):
     if ctx.author.id in STATE_MACHINE:

@@ -23,14 +23,14 @@ class ViewQuiz(Embed):
             self.keyboard = [
                 [
                     Button(label='Пройти', style=ButtonStyle.green,
-                           custom_id='quiz_play:none'),
+                           custom_id=f'quiz_play:{quiz_id}'),
                 ]
             ]
         elif quiz.publication:
             self.keyboard = [
                 [
                     Button(label='Пройти', style=ButtonStyle.green,
-                           custom_id='quiz_play:none'),
+                           custom_id=f'quiz_play:{quiz_id}'),
                     Button(label='Редактировать', style=ButtonStyle.gray,
                            custom_id=f'quiz_edit:{quiz_id},{server_name}')
                 ]

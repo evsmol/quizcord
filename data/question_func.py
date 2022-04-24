@@ -71,7 +71,7 @@ def update_question(question_id, text=None, explanation=None, answers=None,
             question.explanation = explanation
     if answers:
         question.answers = answers
-    if right_answer:
+    if right_answer is not None:
         question.right_answer = right_answer
     if media is not None:
         if media == '':

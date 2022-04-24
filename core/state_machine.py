@@ -12,7 +12,9 @@ class QuizcordStateMachine(object):
 
         'question_select', 'question_edit', 'question_set_text',
         'question_set_explanation', 'question_set_media',
-        'question_set_answers'
+        'question_set_answers',
+
+        'quiz_play'
     ]
 
     def __init__(self, initial):
@@ -26,6 +28,8 @@ class QuizcordStateMachine(object):
         self.question_number = None
         self.question_quantity = None
         self.msg_media = None
+
+        self.correctly_answered = 0
 
         self.machine = Machine(
             model=self,

@@ -2,8 +2,9 @@ from discord_components import Interaction
 
 import embeds
 from core.state_machine import QuizcordStateMachine, STATE_MACHINE
-from data.quiz_func import update_quiz, del_quiz, get_quiz
-from data.question_func import add_question, del_question
+from data.quiz_func import update_quiz, del_quiz, get_quiz, \
+    check_quiz_for_publication
+from data.question_func import add_question, del_question, get_question
 
 
 async def button_parser(interaction: Interaction, client):
@@ -28,9 +29,15 @@ async def button_parser(interaction: Interaction, client):
                 initial='quiz_edit')
             STATE_MACHINE[interaction.author.id].quiz_id = quiz_id
         case 'published_quiz':
-            del STATE_MACHINE[interaction.author.id]
-
             quiz_id, server_name = parameters.split(',')
+
+            if not check_quiz_for_publication(int(quiz_id)):
+                await interaction.author.send('Нельзя опубликовать квиз. '
+                                              'Добавьте варианты ответа для '
+                                              'каждого вопроса')
+                return
+
+            del STATE_MACHINE[interaction.author.id]
 
             update_quiz(quiz_id, publication=True)
 
@@ -379,4 +386,89 @@ async def button_parser(interaction: Interaction, client):
             await interaction.message.edit(
                 embed=questions,
                 components=questions.keyboard
+            )
+        case 'quiz_play':
+            quiz_id = int(parameters)
+
+            STATE_MACHINE[interaction.author.id] = QuizcordStateMachine(
+                initial='quiz_play'
+            )
+            STATE_MACHINE[interaction.author.id].quiz_id = quiz_id
+
+            quiz = get_quiz(quiz_id)
+            questions = quiz.questions
+
+            await interaction.author.send(f'Открываю квиз **{quiz.title}** '
+                                          f'от <@{quiz.author_id}>')
+
+            question_id = questions[0]
+            number = 1
+            quantity = len(questions)
+
+            STATE_MACHINE[interaction.author.id].question_quantity = quantity
+
+            msg_media = await interaction.author.send('ᅠ')
+            STATE_MACHINE[interaction.author.id].msg_media = msg_media
+
+            embed = embeds.GameQuestion(question_id, number, quantity)
+            if embed.media:
+                await msg_media.edit(embed.media)
+            await interaction.author.send(
+                embed=embed,
+                components=embed.keyboard
+            )
+        case 'answer_options':
+            question_id, number, quantity, answer = map(
+                int, parameters.split(',')
+            )
+
+            question = get_question(question_id)
+            right_answer = question.right_answer
+            if right_answer == answer:
+                STATE_MACHINE[interaction.author.id].correctly_answered += 1
+
+            embed = embeds.GameQuestion(question_id, number, quantity,
+                                        closed=False, chosen=answer)
+            await interaction.message.edit(
+                embed=embed,
+                components=embed.keyboard
+            )
+        case 'next_question':
+            number, quantity = map(int, parameters.split(','))
+
+            quiz_id = STATE_MACHINE[interaction.author.id].quiz_id
+            quiz = get_quiz(quiz_id)
+            questions = quiz.questions
+
+            question_id = questions[number - 1]
+
+            embed = embeds.GameQuestion(question_id, number, quantity)
+            await interaction.message.edit(
+                embed=embed,
+                components=embed.keyboard
+            )
+        case 'finish_game':
+            correctly_answered = \
+                STATE_MACHINE[interaction.author.id].correctly_answered
+
+            quiz_id = STATE_MACHINE[interaction.author.id].quiz_id
+            quiz = get_quiz(quiz_id)
+
+            quantity = len(quiz.questions)
+
+            players = quiz.players
+            player = interaction.author.id
+
+            players[player] = correctly_answered
+
+            update_quiz(quiz_id, players=players)
+
+            msg_media = STATE_MACHINE[interaction.author.id].msg_media
+            await msg_media.delete()
+
+            del STATE_MACHINE[interaction.author.id]
+
+            await interaction.message.edit(
+                embed=embeds.EndGame(quiz.title, correctly_answered, quantity),
+                components=[]
             )

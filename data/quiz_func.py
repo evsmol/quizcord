@@ -9,7 +9,7 @@ def add_quiz(author_id, server_id=None):
     quiz.description = None
     quiz.server_id = server_id
     quiz.author_id = author_id
-    quiz.players = []
+    quiz.players = {}
     quiz.questions = []
 
     db_sess = db_session.create_session()
@@ -97,3 +97,27 @@ def update_quiz(quiz_id, title=None, description=None, server_id=None,
 
     db_sess.commit()
     db_sess.close()
+
+
+def check_quiz_for_publication(quiz_id):
+    db_sess = db_session.create_session()
+
+    resolution = True
+
+    quiz = db_sess.query(Quiz).filter(Quiz.id == quiz_id).first()
+    questions = quiz.questions
+
+    for question_id in questions:
+        question = db_sess.query(Question).filter(
+            Question.id == question_id
+        ).first()
+
+        if question.answers:
+            continue
+        else:
+            resolution = False
+            break
+
+    db_sess.close()
+
+    return resolution

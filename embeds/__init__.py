@@ -7,3 +7,5 @@ from .view_quiz import ViewQuiz
 from .notification import Notification
 from .view_questions import ViewQuestions
 from .change_question import ChangeQuestion
+from .game_question import GameQuestion
+from .end_game import EndGame

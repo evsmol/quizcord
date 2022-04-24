@@ -18,11 +18,14 @@ class ChangeQuestion(Embed):
         self.media = question.media
 
         self.title = question.text if question.text else NULL_QUESTION_TEXT
-        self.add_field(name='Варианты ответов',
-                       value='\n'.join([f'{i + 1}) {q}' for i, q in
-                                        enumerate(question.answers)])
-                       if question.answers
-                       else NULL_QUESTION_ANSWERS, inline=False)
+        self.add_field(
+            name='Варианты ответов',
+            value='\n'.join(
+                [f'{i + 1}) {q if i != question.right_answer else f"__{q}__"}'
+                 for i, q in
+                 enumerate(question.answers)])
+            if question.answers
+            else NULL_QUESTION_ANSWERS, inline=False)
 
         if question.explanation:
             self.add_field(name='Пояснение',

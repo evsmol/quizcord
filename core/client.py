@@ -3,7 +3,7 @@ from discord.ext.commands import Bot, Context, errors
 from discord_components import DiscordComponents, Interaction
 
 import embeds
-from core.config import DEVELOPERS_ID
+from core.config import DEVELOPERS_ID, BOT_ID
 from core.button_parser import button_parser
 from core.state_machine import QuizcordStateMachine, STATE_MACHINE
 from data.quiz_func import add_quiz, update_quiz, get_server_quizzes, \
@@ -40,18 +40,38 @@ async def on_button_click(interaction: Interaction):
 
 
 # MESSAGES
-@client.command(name='квизы')
-async def get_quizzes_for_server(ctx: Context):
-    if ctx.guild:
-        await ctx.channel.send(embed=embeds.ServerQuizzes(ctx.guild.id))
-
-
 @client.command(name='помощь')
 async def get_help(ctx: Context):
     if ctx.guild:
         await ctx.channel.send(embed=embeds.Help(guild=True))
     else:
         await ctx.author.send(embed=embeds.Help(guild=False))
+
+
+@client.command(name='квизы')
+async def get_quizzes_for_server(ctx: Context, user_id=None):
+    if ctx.guild:
+        if not user_id:
+            await ctx.channel.send(
+                embed=embeds.ServerQuizzes(ctx.guild.id)
+            )
+        else:
+            user_id = user_id.replace('<@!', '', 1)
+            user_id = user_id.replace('<@', '', 1)
+            user_id = user_id.replace('>', '', 1)
+            try:
+                user = client.get_user(int(user_id))
+                if not user:
+                    raise ValueError
+            except ValueError:
+                await ctx.channel.send('Введён некорректный id автора')
+                return
+
+            if user.id == int(BOT_ID):
+                await ctx.channel.send(f'<@{BOT_ID}> пока не научился '
+                                       f'создавать свои квизы')
+            else:
+                await get_quizzes_by_user(ctx, 'квизы', author=user)
 
 
 @client.command(name='создать')
@@ -102,18 +122,25 @@ async def create_quiz(ctx: Context):
 
 
 @client.command(name='мои')
-async def get_quizzes_by_uzer(ctx: Context, ctx2):
+async def get_quizzes_by_user(ctx: Context, ctx2, author=None):
+    if not author:
+        author_id = ctx.author.id
+        author_name = ctx.author.name
+    else:
+        author_id = author.id
+        author_name = author.name
+
     match ctx2:
         case 'квизы':
             if ctx.guild:
                 await ctx.channel.send(
-                    embed=await embeds.embed_user_quizzes(ctx.author.id,
-                                                          ctx.author.name,
+                    embed=await embeds.embed_user_quizzes(author_id,
+                                                          author_name,
                                                           ctx.guild.id))
             else:
                 await ctx.author.send(
-                    embed=await embeds.embed_user_quizzes(ctx.author.id,
-                                                          ctx.author.name,
+                    embed=await embeds.embed_user_quizzes(author_id,
+                                                          author_name,
                                                           client=client))
 
 

@@ -16,6 +16,10 @@ async def embed_user_quizzes(user_id, user_name, server_id=None, client=None):
         guild = None
         if quiz.server_id and not server_id:
             guild = await get_guild_cached(quiz.server_id, client)
+
+        if quiz.publication is False and not guild:
+            continue
+
         default_title = quiz.title if quiz.title else NULL_QUIZ_TITLE
         quizzes_list.append(
             f'`[{quiz.id}]` '

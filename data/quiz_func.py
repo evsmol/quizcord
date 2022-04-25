@@ -60,7 +60,16 @@ def get_user_quizzes(user_id, server_id=None):
 
 def get_quiz_questions(quiz_id):
     db_sess = db_session.create_session()
-    questions = db_sess.query(Question).filter(Question.quiz_id == quiz_id)
+
+    quiz = db_sess.query(Quiz).filter(Quiz.id == quiz_id).first()
+    questions_id = quiz.questions
+
+    questions = []
+    for question_id in questions_id:
+        question = db_sess.query(Question).filter(Question.id ==
+                                                  question_id).first()
+        questions.append(question)
+
     try:
         return questions
     finally:

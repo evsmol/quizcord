@@ -1,6 +1,7 @@
 from discord_components import Interaction
 
 import embeds
+from core.strings import NULL_QUIZ_TITLE
 from core.state_machine import QuizcordStateMachine, STATE_MACHINE
 from data.quiz_func import update_quiz, del_quiz, get_quiz, \
     check_quiz_for_publication
@@ -416,8 +417,11 @@ async def button_parser(interaction: Interaction, client):
                 )
                 return
 
-            await interaction.author.send(f'Открываю квиз **{quiz.title}** '
-                                          f'от <@{quiz.author_id}>')
+            await interaction.author.send(
+                f'Открываю квиз '
+                f'**{quiz.title if quiz.title else NULL_QUIZ_TITLE}** '
+                f'от <@{quiz.author_id}>'
+            )
 
             question_id = questions[0]
             number = 1
@@ -518,14 +522,14 @@ async def button_parser(interaction: Interaction, client):
                     ),
                     components=[]
                 )
-                return 
+                return
 
             quantity = len(quiz.questions)
 
             players = quiz.players
             player = interaction.author.id
 
-            players[player] = correctly_answered
+            players[str(player)] = correctly_answered
 
             update_quiz(quiz_id, players=players)
 

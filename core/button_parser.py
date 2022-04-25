@@ -443,6 +443,13 @@ async def button_parser(interaction: Interaction, client):
             question_id = questions[number - 1]
 
             embed = embeds.GameQuestion(question_id, number, quantity)
+
+            msg_media = STATE_MACHINE[interaction.author.id].msg_media
+            if embed.media:
+                await msg_media.edit(embed.media)
+            else:
+                await msg_media.edit('ᅠ')
+
             await interaction.message.edit(
                 embed=embed,
                 components=embed.keyboard

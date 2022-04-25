@@ -391,7 +391,7 @@ async def button_parser(interaction: Interaction, client):
             quiz_id = int(parameters)
 
             if interaction.author.id in STATE_MACHINE:
-                await interaction.author.send('Вы не можете проходить '
+                await interaction.author.send('Вы не можете начать проходить '
                                               'квиз в этом состоянии')
                 return
 
@@ -402,6 +402,19 @@ async def button_parser(interaction: Interaction, client):
 
             quiz = get_quiz(quiz_id)
             questions = quiz.questions
+
+            if not quiz.publication:
+                del STATE_MACHINE[interaction.author.id]
+
+                await interaction.message.edit(
+                    embed=embeds.Notification(
+                        'Квиз снят с публикации',
+                        'Прохождение квиза недоступно, '
+                        'так как автор снял его с публикации'
+                    ),
+                    components=[]
+                )
+                return
 
             await interaction.author.send(f'Открываю квиз **{quiz.title}** '
                                           f'от <@{quiz.author_id}>')
@@ -432,6 +445,21 @@ async def button_parser(interaction: Interaction, client):
             if right_answer == answer:
                 STATE_MACHINE[interaction.author.id].correctly_answered += 1
 
+            quiz_id = question.quiz_id
+            quiz = get_quiz(quiz_id)
+            if not quiz.publication:
+                del STATE_MACHINE[interaction.author.id]
+
+                await interaction.message.edit(
+                    embed=embeds.Notification(
+                        'Квиз снят с публикации',
+                        'Прохождение квиза недоступно, '
+                        'так как автор снял его с публикации'
+                    ),
+                    components=[]
+                )
+                return
+
             embed = embeds.GameQuestion(question_id, number, quantity,
                                         closed=False, chosen=answer)
             await interaction.message.edit(
@@ -444,6 +472,19 @@ async def button_parser(interaction: Interaction, client):
             quiz_id = STATE_MACHINE[interaction.author.id].quiz_id
             quiz = get_quiz(quiz_id)
             questions = quiz.questions
+
+            if not quiz.publication:
+                del STATE_MACHINE[interaction.author.id]
+
+                await interaction.message.edit(
+                    embed=embeds.Notification(
+                        'Квиз снят с публикации',
+                        'Прохождение квиза недоступно, '
+                        'так как автор снял его с публикации'
+                    ),
+                    components=[]
+                )
+                return
 
             question_id = questions[number - 1]
 
@@ -465,6 +506,19 @@ async def button_parser(interaction: Interaction, client):
 
             quiz_id = STATE_MACHINE[interaction.author.id].quiz_id
             quiz = get_quiz(quiz_id)
+
+            if not quiz.publication:
+                del STATE_MACHINE[interaction.author.id]
+
+                await interaction.message.edit(
+                    embed=embeds.Notification(
+                        'Квиз снят с публикации',
+                        'Прохождение квиза недоступно, '
+                        'так как автор снял его с публикации'
+                    ),
+                    components=[]
+                )
+                return 
 
             quantity = len(quiz.questions)
 

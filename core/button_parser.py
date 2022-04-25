@@ -390,6 +390,11 @@ async def button_parser(interaction: Interaction, client):
         case 'quiz_play':
             quiz_id = int(parameters)
 
+            if interaction.author.id in STATE_MACHINE:
+                await interaction.author.send('Вы не можете проходить '
+                                              'квиз в этом состоянии')
+                return
+
             STATE_MACHINE[interaction.author.id] = QuizcordStateMachine(
                 initial='quiz_play'
             )

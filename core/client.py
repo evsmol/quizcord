@@ -246,15 +246,6 @@ async def get_quiz_rating(ctx: Context, *quiz_id):
             await ctx.channel.send('Нет доступа к квизу')
 
 
-@client.command(name='отмена')
-async def cancel(ctx: Context):
-    if ctx.author.id in STATE_MACHINE:
-        del STATE_MACHINE[ctx.author.id]
-        await ctx.send('Текущая команда отменена')
-    else:
-        await ctx.send('Нет команды для отмены...')
-
-
 @client.event
 async def on_message(message: Message):
     if message.content.startswith(client.command_prefix):
@@ -565,3 +556,20 @@ async def del_empty_quizzes(ctx: Context, ctx2=None):
         case 'квизы':
             delete_empty_quizzes()
             await ctx.message.add_reaction('✅')
+
+
+@client.command(name='отмена')
+async def cancel(ctx: Context):
+    if ctx.author.id not in DEVELOPERS_ID:
+        msg = 'Эта команда доступна только разработчикам'
+        if ctx.guild:
+            await ctx.channel.send(msg)
+        else:
+            await ctx.author.send(msg)
+        return
+
+    if ctx.author.id in STATE_MACHINE:
+        del STATE_MACHINE[ctx.author.id]
+        await ctx.message.add_reaction('✅')
+    else:
+        await ctx.message.add_reaction('❌')

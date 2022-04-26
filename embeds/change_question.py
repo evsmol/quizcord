@@ -18,7 +18,7 @@ class ChangeQuestion(Embed):
         self.title = question.text if question.text else NULL_QUESTION_TEXT
 
         self.add_field(
-            name='Варианты ответов',
+            name='Варианты ответа',
             value='\n'.join(
                 [f'{i + 1}) {q if i != question.right_answer else f"__{q}__"}'
                  for i, q in enumerate(question.answers)]
@@ -69,7 +69,7 @@ class ChangeQuestion(Embed):
             ],
             [
                 Button(
-                    label='Варианты ответов',
+                    label='Варианты ответа',
                     custom_id=f'questions_answers:{question_id},{number},'
                               f'{quantity}'
                 ),

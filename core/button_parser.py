@@ -42,6 +42,13 @@ async def button_parser(interaction: Interaction, client):
                 )
                 return
 
+            quiz = get_quiz(int(quiz_id))
+            if len(quiz.questions) == 0:
+                await interaction.author.send(
+                    'Нельзя опубликовать пустой квиз'
+                )
+                return
+
             del STATE_MACHINE[interaction.author.id]
 
             update_quiz(quiz_id, publication=True)
@@ -129,7 +136,11 @@ async def button_parser(interaction: Interaction, client):
         case 'change_questions':
             STATE_MACHINE[interaction.author.id].select_question()
 
-            question_id, number, quantity = parameters.split(',')
+            question_id, number, quantity = map(int, parameters.split(','))
+
+            if question_id < 0:
+                quiz_id = STATE_MACHINE[interaction.author.id].quiz_id
+                question_id = add_question(quiz_id)
 
             await interaction.message.delete()
 

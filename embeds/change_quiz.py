@@ -61,7 +61,7 @@ async def embed_change_quiz(quiz_id, client):
     else:
         number = 1
         if not quiz.questions:
-            question_id = add_question(quiz_id)
+            question_id = -1
             quantity = 1
         else:
             question_id = quiz.questions[0]

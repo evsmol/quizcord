@@ -489,7 +489,7 @@ async def on_message(message: Message):
 
                 if len(answers) > 5:
                     await message.author.send(
-                        'Вариантов ответов не может быть больше 5. '
+                        'Вариантов ответа не может быть больше 5. '
                         'Пожалуйста, введите их повторно'
                     )
                     return

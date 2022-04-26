@@ -20,6 +20,8 @@ class QuizRating(Embed):
             f'{i + 1}) <@{player[0]}> {player[1]}/{quantity}'
             for i, player in enumerate(players)
         )
+
         self.title = f'Рейтинг квиза «{quiz.title}»'
+
         self.description = rating_list if rating_list \
             else 'Никто ещё не прошёл этот квиз'

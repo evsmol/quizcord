@@ -1,7 +1,6 @@
 from discord import Embed
 
 from core.colors import QuizcordColor
-from core.config import BOT_ID
 
 
 class ChooseServer(Embed):
@@ -11,10 +10,13 @@ class ChooseServer(Embed):
 
         server_list = '\n'.join(
             f'`[{i + 1}]` {server_name}'
-            for i, server_name in enumerate(servers_names))
+            for i, server_name in enumerate(servers_names)
+        )
 
         self.title = 'Доступные серверы'
+
         self.description = server_list
+
         if server_list:
             self.add_field(
                 name='ᅠ',

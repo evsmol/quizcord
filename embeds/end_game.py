@@ -10,5 +10,7 @@ class EndGame(Embed):
 
         self.title = f'Квиз «{quiz_name}» пройден!'
 
-        self.add_field(name='Ваш результат',
-                       value=f'{result}/{quantity}')
+        self.add_field(
+            name='Ваш результат',
+            value=f'{result}/{quantity}'
+        )

@@ -59,6 +59,7 @@ async def get_quizzes_for_server(ctx: Context, user_id=None):
             user_id = user_id.replace('<@!', '', 1)
             user_id = user_id.replace('<@', '', 1)
             user_id = user_id.replace('>', '', 1)
+
             try:
                 user = client.get_user(int(user_id))
                 if not user:
@@ -68,8 +69,9 @@ async def get_quizzes_for_server(ctx: Context, user_id=None):
                 return
 
             if user.id == int(BOT_ID):
-                await ctx.channel.send(f'<@{BOT_ID}> пока не научился '
-                                       f'создавать свои квизы')
+                await ctx.channel.send(
+                    f'<@{BOT_ID}> пока не научился создавать свои квизы'
+                )
             else:
                 await get_quizzes_by_user(ctx, 'квизы', author=user)
 
@@ -82,10 +84,14 @@ async def create_quiz(ctx: Context):
 
     try:
         await ctx.author.send('Создаю новый квиз...')
-        await ctx.author.send('*Учтите, что пустой квиз может быть удалён '
-                              'при проверке модератором!*')
+        await ctx.author.send(
+            '*Учтите, что пустой квиз может быть удалён при проверке '
+            'модератором!*'
+        )
+
         if ctx.guild:
             await ctx.message.add_reaction('📨')
+
             quiz_id = add_quiz(ctx.author.id, ctx.guild.id)
 
             view_quiz = embeds.ViewQuiz(quiz_id, ctx.guild.name, ctx.author.id)
@@ -109,15 +115,21 @@ async def create_quiz(ctx: Context):
 
         else:
             STATE_MACHINE[ctx.author.id] = QuizcordStateMachine(
-                initial='quiz_set_server')
+                initial='quiz_set_server'
+            )
+
             STATE_MACHINE[ctx.author.id].servers = ctx.author.mutual_guilds
-            servers_names = [server.name
-                             for server in ctx.author.mutual_guilds]
+
+            servers_names = [
+                server.name for server in ctx.author.mutual_guilds
+            ]
+
             await ctx.author.send(embed=embeds.ChooseServer(servers_names))
 
     except errors.Forbidden as e:
-        await ctx.channel.send('Чтобы создать квиз, откройте доступ к личным '
-                               'сообщениям')
+        await ctx.channel.send(
+            'Чтобы создать квиз, откройте доступ к личным сообщениям'
+        )
         print(f'[ERROR] {e}')
 
 
@@ -130,40 +142,48 @@ async def get_quizzes_by_user(ctx: Context, ctx2, author=None):
         author_id = author.id
         author_name = author.name
 
-    match ctx2:
-        case 'квизы':
-            if ctx.guild:
-                await ctx.channel.send(
-                    embed=await embeds.embed_user_quizzes(author_id,
-                                                          author_name,
-                                                          ctx.guild.id))
-            else:
-                await ctx.author.send(
-                    embed=await embeds.embed_user_quizzes(author_id,
-                                                          author_name,
-                                                          client=client))
+    if ctx2 == 'квизы':
+        if ctx.guild:
+            await ctx.channel.send(
+                embed=await embeds.embed_user_quizzes(
+                    author_id,
+                    author_name,
+                    ctx.guild.id
+                )
+            )
+
+        else:
+            await ctx.author.send(
+                embed=await embeds.embed_user_quizzes(
+                    author_id,
+                    author_name,
+                    client=client
+                )
+            )
 
 
 @client.command(name='квиз')
-async def get_quiz(ctx: Context, *quiz_id):
+async def get_quiz_by_id(ctx: Context, *quiz_id):
     if not quiz_id:
         msg = 'Отсутствует номер квиза'
         if ctx.guild:
             await ctx.channel.send(msg)
         else:
             await ctx.author.send(msg)
+
     elif not quiz_id[0].isdigit() or len(quiz_id) > 1:
         msg = 'Введён некорректный номер квиза'
         if ctx.guild:
             await ctx.channel.send(msg)
         else:
             await ctx.author.send(msg)
+
     elif ctx.guild:
         quiz_id = int(quiz_id[0])
         server_quizzes = get_server_quizzes(ctx.guild.id)
         quizzes_id = [quiz.id for quiz in server_quizzes]
-        if quiz_id in quizzes_id:
 
+        if quiz_id in quizzes_id:
             view_quiz = embeds.ViewQuiz(
                 quiz_id,
                 ctx.guild.name,
@@ -176,14 +196,17 @@ async def get_quiz(ctx: Context, *quiz_id):
             )
         else:
             await ctx.channel.send('Нет доступа к квизу')
+
     else:
         quiz_id = int(quiz_id[0])
         quizzes_list = get_user_quizzes(ctx.author.id)
         quizzes_id = [quiz.id for quiz in quizzes_list]
         quizzes_server_id = [quiz.server_id for quiz in quizzes_list]
+
         if quiz_id in quizzes_id:
             server = client.get_guild(
-                quizzes_server_id[quizzes_id.index(quiz_id)])
+                quizzes_server_id[quizzes_id.index(quiz_id)]
+            )
 
             view_quiz = embeds.ViewQuiz(quiz_id, server.name, ctx.author.id)
             await ctx.author.send(
@@ -195,26 +218,29 @@ async def get_quiz(ctx: Context, *quiz_id):
 
 
 @client.command(name='рейтинг')
-async def get_quiz(ctx: Context, *quiz_id):
+async def get_quiz_rating(ctx: Context, *quiz_id):
     if not quiz_id:
         msg = 'Отсутствует номер квиза'
         if ctx.guild:
             await ctx.channel.send(msg)
         else:
             await ctx.author.send(msg)
+
     elif not quiz_id[0].isdigit() or len(quiz_id) > 1:
         msg = 'Введён некорректный номер квиза'
         if ctx.guild:
             await ctx.channel.send(msg)
         else:
             await ctx.author.send(msg)
+
     elif ctx.guild:
         quiz_id = int(quiz_id[0])
         server_quizzes = get_server_quizzes(ctx.guild.id)
         quizzes_id = [quiz.id for quiz in server_quizzes]
+
         if quiz_id in quizzes_id:
             await ctx.channel.send(
-                embed=embeds.QuizRating(quiz_id),
+                embed=embeds.QuizRating(quiz_id)
             )
         else:
             await ctx.channel.send('Нет доступа к квизу')
@@ -236,18 +262,22 @@ async def on_message(message: Message):
 
     elif message.author.id in STATE_MACHINE and not message.guild:
         user = STATE_MACHINE[message.author.id]
+
         match user.state:
             case 'quiz_set_server':
                 if user.servers != message.author.mutual_guilds:
                     STATE_MACHINE[message.author.id].servers = \
                         message.author.mutual_guilds
+
                     await message.author.send(
                         'Список Ваших серверов был изменён. '
-                        'Пожалуйста, выберите сервер повторно')
+                        'Пожалуйста, выберите сервер повторно'
+                    )
 
-                    servers_names = [server.name
-                                     for server
-                                     in message.author.mutual_guilds]
+                    servers_names = [
+                        server.name for server in message.author.mutual_guilds
+                    ]
+
                     await message.author.send(
                         embed=embeds.ChooseServer(servers_names))
 
@@ -257,6 +287,7 @@ async def on_message(message: Message):
 
                         quiz_id = add_quiz(message.author.id, server.id)
                         STATE_MACHINE[message.author.id].quiz_id = quiz_id
+
                         await message.author.send(
                             f'Вы выбрали сервер **{server.name}**'
                         )
@@ -270,24 +301,31 @@ async def on_message(message: Message):
                             embed=view_quiz,
                             components=view_quiz.keyboard
                         )
+
                         del STATE_MACHINE[message.author.id]
+
                     else:
                         await message.author.send(
                             'Нет сервера с таким номером. '
                             'Пожалуйста, выберите сервер повторно'
                         )
+
                 else:
                     await message.author.send(
                         'Некорректный ввод. '
                         'Пожалуйста, выберите сервер повторно'
                     )
+
             case 'quiz_set_title':
                 if len(message.content) > 200:
                     await message.author.send(
                         'Название не должно превышать 200 символов. '
-                        'Пожалуйста, введите его повторно')
+                        'Пожалуйста, введите его повторно'
+                    )
+
                 else:
                     STATE_MACHINE[message.author.id].quiz_title_changed()
+
                     quiz_id = STATE_MACHINE[message.author.id].quiz_id
 
                     update_quiz(quiz_id, title=message.content)
@@ -300,13 +338,17 @@ async def on_message(message: Message):
                         embed=embed,
                         components=keyboard
                     )
+
             case 'quiz_set_description':
                 if len(message.content) > 2000:
                     await message.author.send(
                         'Описание не должно превышать 2000 символов. '
-                        'Пожалуйста, введите его повторно')
+                        'Пожалуйста, введите его повторно'
+                    )
+
                 else:
                     STATE_MACHINE[message.author.id].quiz_description_changed()
+
                     quiz_id = STATE_MACHINE[message.author.id].quiz_id
 
                     if message.content == '.':
@@ -322,13 +364,17 @@ async def on_message(message: Message):
                         embed=embed,
                         components=keyboard
                     )
+
             case 'question_set_text':
                 if len(message.content) > 200:
                     await message.author.send(
                         'Текст вопроса не должен превышать 200 символов. '
-                        'Пожалуйста, введите его повторно')
+                        'Пожалуйста, введите его повторно'
+                    )
+
                 else:
                     STATE_MACHINE[message.author.id].question_text_changed()
+
                     question_id = STATE_MACHINE[message.author.id].question_id
                     number = STATE_MACHINE[message.author.id].question_number
                     quantity = \
@@ -336,8 +382,11 @@ async def on_message(message: Message):
 
                     update_question(question_id, text=message.content)
 
-                    embed = embeds.ChangeQuestion(question_id, number,
-                                                  quantity)
+                    embed = embeds.ChangeQuestion(
+                        question_id,
+                        number,
+                        quantity
+                    )
 
                     msg_media = await message.author.send('ᅠ')
                     STATE_MACHINE[message.author.id].msg_media = msg_media
@@ -348,14 +397,19 @@ async def on_message(message: Message):
                         embed=embed,
                         components=embed.keyboard
                     )
+
             case 'question_set_explanation':
                 if len(message.content) > 2000:
                     await message.author.send(
                         'Пояснение не должно превышать 2000 символов. '
-                        'Пожалуйста, введите его повторно')
+                        'Пожалуйста, введите его повторно'
+                    )
+
                 else:
                     STATE_MACHINE[
-                        message.author.id].question_explanation_changed()
+                        message.author.id
+                    ].question_explanation_changed()
+
                     question_id = STATE_MACHINE[message.author.id].question_id
                     number = STATE_MACHINE[message.author.id].question_number
                     quantity = \
@@ -372,8 +426,11 @@ async def on_message(message: Message):
                             explanation=message.content
                         )
 
-                    embed = embeds.ChangeQuestion(question_id, number,
-                                                  quantity)
+                    embed = embeds.ChangeQuestion(
+                        question_id,
+                        number,
+                        quantity
+                    )
 
                     msg_media = await message.author.send('ᅠ')
                     STATE_MACHINE[message.author.id].msg_media = msg_media
@@ -384,6 +441,7 @@ async def on_message(message: Message):
                         embed=embed,
                         components=embed.keyboard
                     )
+
             case 'question_set_media':
                 question_id = STATE_MACHINE[message.author.id].question_id
                 number = STATE_MACHINE[message.author.id].question_number
@@ -404,8 +462,11 @@ async def on_message(message: Message):
 
                     STATE_MACHINE[message.author.id].question_media_changed()
 
-                    embed = embeds.ChangeQuestion(question_id, number,
-                                                  quantity)
+                    embed = embeds.ChangeQuestion(
+                        question_id,
+                        number,
+                        quantity
+                    )
 
                     msg_media = await message.author.send('ᅠ')
                     STATE_MACHINE[message.author.id].msg_media = msg_media
@@ -416,21 +477,26 @@ async def on_message(message: Message):
                         embed=embed,
                         components=embed.keyboard
                     )
+
                 except IndexError:
                     await message.author.send(
                         'Некорректный ввод. '
                         'Пожалуйста, отправьте файл повторно'
                     )
+
             case 'question_set_answers':
                 answers = message.content.split('\n')
+
                 if len(answers) > 5:
                     await message.author.send(
                         'Вариантов ответов не может быть больше 5. '
-                        'Пожалуйста, введите их повторно')
+                        'Пожалуйста, введите их повторно'
+                    )
                     return
 
                 right_answer_count = 0
                 right_answer = None
+
                 for i, answer in enumerate(answers):
                     if answer.startswith('+'):
                         right_answer = i
@@ -440,21 +506,26 @@ async def on_message(message: Message):
                 if right_answer_count == 0:
                     await message.author.send(
                         'Верный вариант ответа не указан. '
-                        'Пожалуйста, повторите ввод')
+                        'Пожалуйста, повторите ввод'
+                    )
                     return
+
                 if right_answer_count > 1:
                     await message.author.send(
                         'Указано несколько верных вариантов. '
-                        'Пожалуйста, повторите ввод')
+                        'Пожалуйста, повторите ввод'
+                    )
                     return
 
                 question_id = STATE_MACHINE[message.author.id].question_id
                 number = STATE_MACHINE[message.author.id].question_number
                 quantity = STATE_MACHINE[message.author.id].question_quantity
 
-                update_question(question_id,
-                                answers=answers,
-                                right_answer=right_answer)
+                update_question(
+                    question_id,
+                    answers=answers,
+                    right_answer=right_answer
+                )
 
                 STATE_MACHINE[message.author.id].question_answers_changed()
 
@@ -481,6 +552,7 @@ async def del_empty_quizzes(ctx: Context, ctx2=None):
         else:
             await ctx.author.send(msg)
         return
+
     if ctx.author.id not in DEVELOPERS_ID:
         msg = 'Эта команда доступна только разработчикам'
         if ctx.guild:
@@ -488,6 +560,7 @@ async def del_empty_quizzes(ctx: Context, ctx2=None):
         else:
             await ctx.author.send(msg)
         return
+
     match ctx2:
         case 'квизы':
             delete_empty_quizzes()

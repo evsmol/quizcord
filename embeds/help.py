@@ -1,5 +1,5 @@
 from discord import Embed
-from discord_components import Interaction, Button
+from discord_components import Button
 
 from core.colors import QuizcordColor
 
@@ -12,14 +12,17 @@ from core.colors import QuizcordColor
 class Help(Embed):
     def __init__(self, guild, **kwargs):
         super().__init__(**kwargs)
-        self.title = f'Справка по quizcord'
+        self.colour = QuizcordColor
+
+        self.title = 'Справка по quizcord'
+
         if guild:
             self.description = '-создать*\n' \
                                '-квизы\n' \
                                '-мои квизы*\n' \
                                '-квиз id*'
+
         else:
             self.description = '-создать*\n' \
                                '-мои квизы*\n' \
                                '-квиз id*'
-        self.colour = QuizcordColor

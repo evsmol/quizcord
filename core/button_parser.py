@@ -14,6 +14,7 @@ async def button_parser(interaction: Interaction, client):
     command, parameters = interaction.custom_id.split(':')
 
     match command:
+
         case 'quiz_edit':
             quiz_id, server_name = parameters.split(',')
 
@@ -21,33 +22,40 @@ async def button_parser(interaction: Interaction, client):
                 quiz_id,
                 client
             )
-
             await interaction.message.edit(
                 embed=embed,
                 components=keyboard
             )
+
             STATE_MACHINE[interaction.author.id] = QuizcordStateMachine(
-                initial='quiz_edit')
-            STATE_MACHINE[interaction.author.id].quiz_id = quiz_id
+                initial='quiz_edit'
+            )
+            STATE_MACHINE[interaction.author.id].quiz_id = int(quiz_id)
+
         case 'published_quiz':
             quiz_id, server_name = parameters.split(',')
 
             if not check_quiz_for_publication(int(quiz_id)):
-                await interaction.author.send('Нельзя опубликовать квиз. '
-                                              'Добавьте варианты ответа для '
-                                              'каждого вопроса')
+                await interaction.author.send(
+                    'Нельзя опубликовать квиз. Добавьте варианты ответа для '
+                    'каждого вопроса'
+                )
                 return
 
             del STATE_MACHINE[interaction.author.id]
 
             update_quiz(quiz_id, publication=True)
 
-            view_quiz = embeds.ViewQuiz(int(quiz_id), server_name,
-                                        interaction.author.id)
+            view_quiz = embeds.ViewQuiz(
+                int(quiz_id),
+                server_name,
+                interaction.author.id
+            )
             await interaction.message.edit(
                 embed=view_quiz,
                 components=view_quiz.keyboard
             )
+
         case 'unpublished_quiz':
             quiz_id, server_name = parameters.split(',')
 
@@ -59,7 +67,8 @@ async def button_parser(interaction: Interaction, client):
             )
             await interaction.message.edit(
                 embed=embed,
-                components=keyboard)
+                components=keyboard
+            )
         case 'del_quiz':
             del STATE_MACHINE[interaction.author.id]
 
@@ -74,17 +83,22 @@ async def button_parser(interaction: Interaction, client):
                 embed=embeds.Notification(message, message2),
                 components=[]
             )
+
         case 'return_change_quiz':
             del STATE_MACHINE[interaction.author.id]
 
             quiz_id, server_name = parameters.split(',')
 
-            view_quiz = embeds.ViewQuiz(int(quiz_id), server_name,
-                                        interaction.author.id)
+            view_quiz = embeds.ViewQuiz(
+                int(quiz_id),
+                server_name,
+                interaction.author.id
+            )
             await interaction.message.edit(
                 embed=view_quiz,
                 components=view_quiz.keyboard
             )
+
         case 'change_title':
             STATE_MACHINE[interaction.author.id].edit_quiz_title()
 
@@ -97,6 +111,7 @@ async def button_parser(interaction: Interaction, client):
                 embed=embeds.Notification(message, message2),
                 components=[]
             )
+
         case 'change_description':
             STATE_MACHINE[interaction.author.id].edit_quiz_description()
 
@@ -110,27 +125,31 @@ async def button_parser(interaction: Interaction, client):
                 embed=embeds.Notification(message, message2),
                 components=[]
             )
+
         case 'change_questions':
             STATE_MACHINE[interaction.author.id].select_question()
 
             question_id, number, quantity = parameters.split(',')
 
             await interaction.message.delete()
+
             msg_media = await interaction.author.send(
                 'Открываю редактор вопросов...'
             )
-
             STATE_MACHINE[interaction.author.id].msg_media = msg_media
 
-            questions = embeds.ViewQuestions(question_id, number, quantity)
+            embed = embeds.ViewQuestions(question_id, number, quantity)
+
             await interaction.author.send(
-                embed=questions,
-                components=questions.keyboard
+                embed=embed,
+                components=embed.keyboard
             )
-            if questions.media:
-                await msg_media.edit(questions.media)
+
+            if embed.media:
+                await msg_media.edit(embed.media)
             else:
                 await msg_media.edit('ᅠ')
+
         case 'questions_left':
             number_question = int(parameters)
 
@@ -139,11 +158,12 @@ async def button_parser(interaction: Interaction, client):
             questions = quiz.questions
 
             quantity = len(questions)
+
             if number_question > 1:
                 question_id = questions[number_question - 2]
                 number = number_question - 1
                 embed = embeds.ViewQuestions(question_id, number, quantity)
-            elif number_question == 1:
+            else:
                 question_id = questions[-1]
                 number = quantity
                 embed = embeds.ViewQuestions(question_id, number, quantity)
@@ -158,6 +178,7 @@ async def button_parser(interaction: Interaction, client):
                 embed=embed,
                 components=embed.keyboard
             )
+
         case 'questions_right':
             number_question = int(parameters)
 
@@ -166,11 +187,12 @@ async def button_parser(interaction: Interaction, client):
             questions = quiz.questions
 
             quantity = len(questions)
+
             if number_question < quantity:
                 question_id = questions[number_question]
                 number = number_question + 1
                 embed = embeds.ViewQuestions(question_id, number, quantity)
-            elif number_question == quantity:
+            else:
                 question_id = questions[0]
                 number = 1
                 embed = embeds.ViewQuestions(question_id, number, quantity)
@@ -185,32 +207,39 @@ async def button_parser(interaction: Interaction, client):
                 embed=embed,
                 components=embed.keyboard
             )
+
         case 'question_edit':
             STATE_MACHINE[interaction.author.id].edit_question()
 
             question_id, number, quantity = parameters.split(',')
 
-            questions = embeds.ChangeQuestion(question_id, number, quantity)
+            embed = embeds.ChangeQuestion(question_id, number, quantity)
             await interaction.message.edit(
-                embed=questions,
-                components=questions.keyboard
+                embed=embed,
+                components=embed.keyboard
             )
+
         case 'add_question':
             quantity = int(parameters)
+
             quiz_id = STATE_MACHINE[interaction.author.id].quiz_id
 
             question_id = add_question(quiz_id)
 
-            questions = embeds.ViewQuestions(question_id, quantity + 1,
-                                             quantity + 1)
+            embed = embeds.ViewQuestions(
+                question_id,
+                quantity + 1,
+                quantity + 1
+            )
 
             msg_media = STATE_MACHINE[interaction.author.id].msg_media
             await msg_media.edit('ᅠ')
 
             await interaction.message.edit(
-                embed=questions,
-                components=questions.keyboard
+                embed=embed,
+                components=embed.keyboard
             )
+
         case 'questions_return':
             STATE_MACHINE[interaction.author.id].select_question_return()
             quiz_id = STATE_MACHINE[interaction.author.id].quiz_id
@@ -227,6 +256,7 @@ async def button_parser(interaction: Interaction, client):
                 embed=embed,
                 components=keyboard
             )
+
         case 'question_up':
             question_id, number, quantity = map(int, parameters.split(','))
 
@@ -238,7 +268,7 @@ async def button_parser(interaction: Interaction, client):
                 questions[number - 1], questions[number] = \
                     questions[number], questions[number - 1]
                 number = number + 1
-            elif number == quantity:
+            else:
                 questions[number - 1], questions[0] = \
                     questions[0], questions[number - 1]
                 number = 1
@@ -250,6 +280,7 @@ async def button_parser(interaction: Interaction, client):
                 embed=embed,
                 components=embed.keyboard
             )
+
         case 'question_down':
             question_id, number, quantity = map(int, parameters.split(','))
 
@@ -261,7 +292,7 @@ async def button_parser(interaction: Interaction, client):
                 questions[number - 1], questions[number - 2] = \
                     questions[number - 2], questions[number - 1]
                 number = number - 1
-            elif number == 1:
+            else:
                 questions[number - 1], questions[-1] = \
                     questions[-1], questions[number - 1]
                 number = quantity
@@ -273,6 +304,7 @@ async def button_parser(interaction: Interaction, client):
                 embed=embed,
                 components=embed.keyboard
             )
+
         case 'question_del':
             STATE_MACHINE[interaction.author.id].edit_question_delete()
 
@@ -286,7 +318,7 @@ async def button_parser(interaction: Interaction, client):
 
             if number < quantity:
                 question_id = questions[number - 1]
-            elif number == quantity:
+            else:
                 question_id = questions[number - 2]
                 number -= 1
 
@@ -295,6 +327,7 @@ async def button_parser(interaction: Interaction, client):
                 embed=questions,
                 components=questions.keyboard
             )
+
         case 'question_text':
             STATE_MACHINE[interaction.author.id].edit_question_text()
 
@@ -312,6 +345,7 @@ async def button_parser(interaction: Interaction, client):
                 embed=embeds.Notification(message, message2),
                 components=[]
             )
+
         case 'question_explanation':
             STATE_MACHINE[interaction.author.id].edit_question_explanation()
 
@@ -330,6 +364,7 @@ async def button_parser(interaction: Interaction, client):
                 embed=embeds.Notification(message, message2),
                 components=[]
             )
+
         case 'questions_answers':
             STATE_MACHINE[interaction.author.id].edit_question_answers()
 
@@ -341,23 +376,24 @@ async def button_parser(interaction: Interaction, client):
             msg_media = STATE_MACHINE[interaction.author.id].msg_media
             await msg_media.delete()
 
-            message = 'Изменение вариантов ответов'
-            message2 = 'Отправьте варианты ответов на вопрос в следующем ' \
+            message = 'Изменение вариантов ответа'
+            message2 = 'Отправьте варианты ответа на вопрос в следующем ' \
                        'формате:\n' \
                        'В одной строке — один вариант ответа. Всего ' \
                        'может быть от 1 до 5 вариантов.\n ' \
-                       'Для отметки верного варианта ответов поставьте ' \
-                       'вплотную перед началом символ `+`.\n' \
+                       'Для отметки верного поставьте вплотную перед началом ' \
+                       'символ `+`.\n' \
                        'Для переноса строки используйте комбинацию клавиш ' \
                        '`Shift + Enter`.\n\n' \
                        '**Пример сообщения:**\n' \
-                       '```Да, является\n' \
+                       'Да, является\n' \
                        '+Нет, не является\n' \
-                       'Иногда```'
+                       'Иногда'
             await interaction.message.edit(
                 embed=embeds.Notification(message, message2),
                 components=[]
             )
+
         case 'question_media':
             STATE_MACHINE[interaction.author.id].edit_question_media()
 
@@ -372,12 +408,13 @@ async def button_parser(interaction: Interaction, client):
             message = 'Изменение медиа'
             message2 = 'Отправьте новый медиафайл для вопроса.\n' \
                        'Чтобы удалить медиа, отправьте точку.\n' \
-                       '*Учтите, что аудиофайл участник будет вынужден ' \
-                       'скачать по ссылке*'
+                       '*Учтите, что аудио- и видеофайлы участник, ' \
+                       'возможно, будет вынужден скачать по ссылке*'
             await interaction.message.edit(
                 embed=embeds.Notification(message, message2),
                 components=[]
             )
+
         case 'question_return':
             STATE_MACHINE[interaction.author.id].edit_question_return()
 
@@ -388,12 +425,14 @@ async def button_parser(interaction: Interaction, client):
                 embed=questions,
                 components=questions.keyboard
             )
+
         case 'quiz_play':
             quiz_id = int(parameters)
 
             if interaction.author.id in STATE_MACHINE:
-                await interaction.author.send('Вы не можете начать проходить '
-                                              'квиз в этом состоянии')
+                await interaction.author.send(
+                    'Вы не можете начать проходить квиз в этом состоянии'
+                )
                 return
 
             STATE_MACHINE[interaction.author.id] = QuizcordStateMachine(
@@ -433,12 +472,15 @@ async def button_parser(interaction: Interaction, client):
             STATE_MACHINE[interaction.author.id].msg_media = msg_media
 
             embed = embeds.GameQuestion(question_id, number, quantity)
+
             if embed.media:
                 await msg_media.edit(embed.media)
+
             await interaction.author.send(
                 embed=embed,
                 components=embed.keyboard
             )
+
         case 'answer_options':
             question_id, number, quantity, answer = map(
                 int, parameters.split(',')
@@ -446,11 +488,13 @@ async def button_parser(interaction: Interaction, client):
 
             question = get_question(question_id)
             right_answer = question.right_answer
+
             if right_answer == answer:
                 STATE_MACHINE[interaction.author.id].correctly_answered += 1
 
             quiz_id = question.quiz_id
             quiz = get_quiz(quiz_id)
+
             if not quiz.publication:
                 del STATE_MACHINE[interaction.author.id]
 
@@ -464,12 +508,19 @@ async def button_parser(interaction: Interaction, client):
                 )
                 return
 
-            embed = embeds.GameQuestion(question_id, number, quantity,
-                                        closed=False, chosen=answer)
+            embed = embeds.GameQuestion(
+                question_id,
+                number,
+                quantity,
+                closed=False,
+                chosen=answer
+            )
+
             await interaction.message.edit(
                 embed=embed,
                 components=embed.keyboard
             )
+
         case 'next_question':
             number, quantity = map(int, parameters.split(','))
 
@@ -495,6 +546,7 @@ async def button_parser(interaction: Interaction, client):
             embed = embeds.GameQuestion(question_id, number, quantity)
 
             msg_media = STATE_MACHINE[interaction.author.id].msg_media
+
             if embed.media:
                 await msg_media.edit(embed.media)
             else:
@@ -504,6 +556,7 @@ async def button_parser(interaction: Interaction, client):
                 embed=embed,
                 components=embed.keyboard
             )
+
         case 'finish_game':
             correctly_answered = \
                 STATE_MACHINE[interaction.author.id].correctly_answered

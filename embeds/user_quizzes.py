@@ -11,9 +11,12 @@ async def embed_user_quizzes(user_id, user_name, server_id=None, client=None):
     embed.colour = QuizcordColor
 
     user_quizzes = get_user_quizzes(user_id, server_id)
+
     quizzes_list = []
+
     for quiz in user_quizzes:
         guild = None
+
         if quiz.server_id and not server_id:
             guild = await get_guild_cached(quiz.server_id, client)
 
@@ -21,6 +24,7 @@ async def embed_user_quizzes(user_id, user_name, server_id=None, client=None):
             continue
 
         default_title = quiz.title if quiz.title else NULL_QUIZ_TITLE
+
         quizzes_list.append(
             f'`[{quiz.id}]` '
             f'{f"**{default_title}**" if guild else default_title}'
@@ -29,6 +33,7 @@ async def embed_user_quizzes(user_id, user_name, server_id=None, client=None):
         )
 
     embed.title = f'Квизы от {user_name}'
+
     embed.description = '\n'.join(quizzes_list) if quizzes_list \
         else 'Нет созданных квизов'
 

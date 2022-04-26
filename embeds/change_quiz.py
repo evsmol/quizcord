@@ -1,5 +1,5 @@
 from discord import Embed
-from discord_components import Interaction, Button, ButtonStyle
+from discord_components import Button, ButtonStyle
 
 from core.colors import QuizcordColor
 from core.strings import NULL_QUIZ_TITLE, NULL_QUESTION_TEXT
@@ -16,18 +16,22 @@ async def embed_change_quiz(quiz_id, client):
     server = await get_guild_cached(quiz.server_id, client)
 
     embed.title = quiz.title if quiz.title else NULL_QUIZ_TITLE
+
     embed.description = quiz.description
+
     embed.add_field(name='Автор', value=f'<@{quiz.author_id}>')
     embed.add_field(name='Сервер', value=f'{server.name}')
 
     questions = get_quiz_questions(quiz_id)
+
     questions_list = '\n'.join(
         f'{i + 1}) {question.text if question.text else NULL_QUESTION_TEXT}'
-        for i, question in enumerate(questions))
+        for i, question in enumerate(questions)
+    )
+
     embed.add_field(
         name='Вопросы',
-        value=questions_list if questions_list
-        else 'Нет созданных вопросов',
+        value=questions_list if questions_list else 'Нет созданных вопросов',
         inline=False
     )
 
@@ -53,6 +57,7 @@ async def embed_change_quiz(quiz_id, client):
                 )
             ]
         ]
+
     else:
         number = 1
         if not quiz.questions:
@@ -82,7 +87,8 @@ async def embed_change_quiz(quiz_id, client):
                 Button(
                     label='Опубликовать',
                     style=ButtonStyle.green,
-                    custom_id=f'published_quiz:{quiz_id},{server.name}'),
+                    custom_id=f'published_quiz:{quiz_id},{server.name}'
+                ),
                 Button(
                     label='Удалить',
                     style=ButtonStyle.red,

@@ -464,9 +464,9 @@ async def on_message(message: Message):
                           f'#{question_id} ({message.content})')
 
             case 'question_set_explanation':
-                if len(message.content) > 2000:
+                if len(message.content) > 1000:
                     await message.author.send(
-                        'Пояснение не должно превышать 2000 символов. '
+                        'Пояснение не должно превышать 1000 символов. '
                         'Пожалуйста, введите его повторно'
                     )
                     print(f'[WARNING P] {message.author.name} '
@@ -571,6 +571,16 @@ async def on_message(message: Message):
                     answers = '_'
                 else:
                     answers = message.content.split('\n')
+
+                if len(message.content) > 1000:
+                    await message.author.send(
+                        'Общий текст вариантов ответа не должен превышать '
+                        '1000 символов. Пожалуйста, введите его повторно'
+                    )
+                    print(f'[WARNING P] {message.author.name} '
+                          f'<{message.author.id}> попытался ввести слишком '
+                          f'длинные варианты ответа')
+                    return
 
                 if len(answers) > 5 and answers != '_':
                     await message.author.send(

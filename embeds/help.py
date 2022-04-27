@@ -1,28 +1,27 @@
 from discord import Embed
-from discord_components import Button
+from discord_components import Button, ButtonStyle
 
 from core.colors import QuizcordColor
 
-# keyboard = [[
-#     Button(label='Серверные квизы', custom_id='get_server_quizzes'),
-#     Button(label='Создать квиз', custom_id='add_quiz', disabled=True)
-# ]]
-
 
 class Help(Embed):
-    def __init__(self, guild, **kwargs):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.colour = QuizcordColor
 
         self.title = 'Справка по quizcord'
 
-        if guild:
-            self.description = '-создать*\n' \
-                               '-квизы\n' \
-                               '-мои квизы*\n' \
-                               '-квиз id*'
+        self.description = 'Подробное руководство по командам, ' \
+                           'редактированию и прохождению квиза доступно ' \
+                           'по ссылке в кнопке'
 
-        else:
-            self.description = '-создать*\n' \
-                               '-мои квизы*\n' \
-                               '-квиз id*'
+        self.keyboard = [
+            [
+                Button(
+                    label='Перейти к справке',
+                    style=ButtonStyle.URL,
+                    url='https://gist.github.com/evsmol/'
+                        '3e5d226057d809bc0243a2c482a9a4c5'
+                )
+            ]
+        ]

@@ -42,12 +42,13 @@ async def on_button_click(interaction: Interaction):
 # MESSAGES
 @client.command(name='помощь')
 async def get_help(ctx: Context):
+    embed = embeds.Help()
     if ctx.guild:
-        await ctx.channel.send(embed=embeds.Help(guild=True))
+        await ctx.channel.send(embed=embed, components=embed.keyboard)
         print(f'[SERVER] {ctx.author.name} <{ctx.author.id}> открывает '
               f'справочник')
     else:
-        await ctx.author.send(embed=embeds.Help(guild=False))
+        await ctx.author.send(embed=embed, components=embed.keyboard)
         print(f'[PERSONAL] {ctx.author.name} <{ctx.author.id}> открывает '
               f'справочник')
 

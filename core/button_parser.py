@@ -16,6 +16,14 @@ async def button_parser(interaction: Interaction, client):
     match command:
 
         case 'quiz_edit':
+            if interaction.author.id in STATE_MACHINE:
+                await interaction.author.send(
+                    'Нельзя начать редактировать квиз в этом состоянии')
+                print(f'[WARNING] {interaction.author.name} '
+                      f'<{interaction.author.id}> попытался создать квиз, '
+                      f'находясь в состоянии')
+                return
+
             quiz_id, server_name = parameters.split(',')
 
             embed, keyboard = await embeds.embed_change_quiz(

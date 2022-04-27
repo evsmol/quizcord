@@ -524,6 +524,11 @@ async def on_message(message: Message):
                             question_id,
                             media=''
                         )
+                    elif message.content == '_':
+                        update_question(
+                            question_id,
+                            media='_'
+                        )
                     else:
                         update_question(
                             question_id,
@@ -561,9 +566,12 @@ async def on_message(message: Message):
                           f'вопроса некорректным вводом')
 
             case 'question_set_answers':
-                answers = message.content.split('\n')
+                if message.content == '_':
+                    answers = '_'
+                else:
+                    answers = message.content.split('\n')
 
-                if len(answers) > 5:
+                if len(answers) > 5 and answers != '_':
                     await message.author.send(
                         'Вариантов ответа не может быть больше 5. '
                         'Пожалуйста, введите их повторно'
@@ -582,7 +590,7 @@ async def on_message(message: Message):
                         right_answer_count += 1
                         answers[i] = answer.lstrip('+')
 
-                if right_answer_count == 0:
+                if right_answer_count == 0 and answers != '_':
                     await message.author.send(
                         'Верный вариант ответа не указан. '
                         'Пожалуйста, повторите ввод'
@@ -592,7 +600,7 @@ async def on_message(message: Message):
                           f'варианты ответа, не указав верный')
                     return
 
-                if right_answer_count > 1:
+                if right_answer_count > 1 and answers != '_':
                     await message.author.send(
                         'Указано несколько верных вариантов. '
                         'Пожалуйста, повторите ввод'
@@ -627,7 +635,7 @@ async def on_message(message: Message):
                 )
                 print(f'[PERSONAL] {message.author.name} '
                       f'<{message.author.id}> изменяет варианты ответа для '
-                      f'вопроса #{question_id} ({message.content})')
+                      f'вопроса #{question_id}\n({message.content})')
 
 
 # ADMIN COMMANDS

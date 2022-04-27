@@ -71,23 +71,36 @@ def update_question(question_id, text=None, explanation=None, answers=None,
         db_sess.query(Question).filter(Question.id == question_id).first()
 
     if text:
-        question.text = text
+        if text == '_':
+            pass
+        else:
+            question.text = text
 
     if explanation is not None:
         if explanation == '':
             question.explanation = None
+        elif explanation == '_':
+            pass
         else:
             question.explanation = explanation
 
     if answers:
-        question.answers = answers
+        if answers == '_':
+            pass
+        else:
+            question.answers = answers
 
     if right_answer is not None:
-        question.right_answer = right_answer
+        if answers == '_':
+            pass
+        else:
+            question.right_answer = right_answer
 
     if media is not None:
         if media == '':
             question.media = None
+        elif media == '_':
+            pass
         else:
             question.media = media
 

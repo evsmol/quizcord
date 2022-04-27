@@ -113,7 +113,8 @@ async def button_parser(interaction: Interaction, client):
             STATE_MACHINE[interaction.author.id].quiz_id = int(quiz_id)
 
             message = 'Изменение названия'
-            message2 = 'Отправьте новое название для квиза'
+            message2 = 'Отправьте новое название для квиза.\n' \
+                       'Чтобы вернуться назад, отправьте подчёркивание'
             await interaction.message.edit(
                 embed=embeds.Notification(message, message2),
                 components=[]
@@ -127,7 +128,8 @@ async def button_parser(interaction: Interaction, client):
 
             message = 'Изменение описания'
             message2 = 'Отправьте новое описание для квиза.\n' \
-                       'Чтобы удалить описание, отправьте точку'
+                       'Чтобы удалить описание, отправьте точку.\n' \
+                       'Чтобы вернуться назад, отправьте подчёркивание'
             await interaction.message.edit(
                 embed=embeds.Notification(message, message2),
                 components=[]
@@ -351,7 +353,8 @@ async def button_parser(interaction: Interaction, client):
             await msg_media.delete()
 
             message = 'Изменение текста вопроса'
-            message2 = 'Отправьте новый текст для вопроса'
+            message2 = 'Отправьте новый текст для вопроса.\n' \
+                       'Чтобы вернуться назад, отправьте подчёркивание'
             await interaction.message.edit(
                 embed=embeds.Notification(message, message2),
                 components=[]
@@ -370,7 +373,8 @@ async def button_parser(interaction: Interaction, client):
 
             message = 'Изменение пояснения'
             message2 = 'Отправьте новое пояснение для вопроса.\n' \
-                       'Чтобы удалить пояснение, отправьте точку'
+                       'Чтобы удалить пояснение, отправьте точку.\n' \
+                       'Чтобы вернуться назад, отправьте подчёркивание'
             await interaction.message.edit(
                 embed=embeds.Notification(message, message2),
                 components=[]
@@ -388,7 +392,8 @@ async def button_parser(interaction: Interaction, client):
             await msg_media.delete()
 
             message = 'Изменение вариантов ответа'
-            message2 = 'Отправьте варианты ответа на вопрос в следующем ' \
+            message2 = 'Чтобы вернуться назад, отправьте подчёркивание.\n' \
+                       'Отправьте варианты ответа на вопрос в следующем ' \
                        'формате:\n' \
                        'В одной строке — один вариант ответа. Всего ' \
                        'может быть от 1 до 5 вариантов.\n ' \
@@ -419,6 +424,7 @@ async def button_parser(interaction: Interaction, client):
             message = 'Изменение медиа'
             message2 = 'Отправьте новый медиафайл для вопроса.\n' \
                        'Чтобы удалить медиа, отправьте точку.\n' \
+                       'Чтобы вернуться назад, отправьте подчёркивание.\n' \
                        '*Учтите, что аудио- и видеофайлы участник, ' \
                        'возможно, будет вынужден скачать по ссылке*'
             await interaction.message.edit(

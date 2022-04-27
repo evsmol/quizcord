@@ -107,11 +107,16 @@ def update_quiz(quiz_id, title=None, description=None, server_id=None,
     quiz = db_sess.query(Quiz).filter(Quiz.id == quiz_id).first()
 
     if title:
-        quiz.title = title
+        if title == '_':
+            pass
+        else:
+            quiz.title = title
 
     if description is not None:
         if description == '':
             quiz.description = None
+        elif description == '_':
+            pass
         else:
             quiz.description = description
 

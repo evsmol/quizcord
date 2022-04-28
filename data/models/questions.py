@@ -22,7 +22,7 @@ class Question(SqlAlchemyBase):
     )
 
     explanation = sqlalchemy.Column(
-        sqlalchemy.VARCHAR(length=2048)
+        sqlalchemy.VARCHAR(length=1000)
     )
 
     answers = sqlalchemy.Column(

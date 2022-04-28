@@ -18,10 +18,11 @@ async def button_parser(interaction: Interaction, client):
         case 'quiz_edit':
             if interaction.author.id in STATE_MACHINE:
                 await interaction.author.send(
-                    'Нельзя начать редактировать квиз в этом состоянии')
+                    'Нельзя начать редактировать квиз в этом состоянии'
+                )
                 print(f'[WARNING] {interaction.author.name} '
-                      f'<{interaction.author.id}> попытался создать квиз, '
-                      f'находясь в состоянии')
+                      f'<{interaction.author.id}> попытался редактировать '
+                      f'квиз, находясь в состоянии')
                 return
 
             quiz_id, server_name = parameters.split(',')

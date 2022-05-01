@@ -43,7 +43,7 @@ async def button_parser(interaction: Interaction, client):
             STATE_MACHINE[interaction.author.id].quiz_id = int(quiz_id)
 
         case 'published_quiz':
-            if await check_restart(interaction):
+            if await check_restart(interaction, client):
                 return
 
             quiz_id, server_name = parameters.split(',')
@@ -77,7 +77,7 @@ async def button_parser(interaction: Interaction, client):
             )
 
         case 'unpublished_quiz':
-            if await check_restart(interaction):
+            if await check_restart(interaction, client):
                 return
 
             quiz_id, server_name = parameters.split(',')
@@ -93,7 +93,7 @@ async def button_parser(interaction: Interaction, client):
                 components=keyboard
             )
         case 'del_quiz':
-            if await check_restart(interaction):
+            if await check_restart(interaction, client):
                 return
 
             del STATE_MACHINE[interaction.author.id]
@@ -111,7 +111,7 @@ async def button_parser(interaction: Interaction, client):
             )
 
         case 'return_change_quiz':
-            if await check_restart(interaction):
+            if await check_restart(interaction, client):
                 return
 
             del STATE_MACHINE[interaction.author.id]
@@ -129,7 +129,7 @@ async def button_parser(interaction: Interaction, client):
             )
 
         case 'change_title':
-            if await check_restart(interaction):
+            if await check_restart(interaction, client):
                 return
 
             STATE_MACHINE[interaction.author.id].edit_quiz_title()
@@ -146,7 +146,7 @@ async def button_parser(interaction: Interaction, client):
             )
 
         case 'change_description':
-            if await check_restart(interaction):
+            if await check_restart(interaction, client):
                 return
 
             STATE_MACHINE[interaction.author.id].edit_quiz_description()
@@ -164,7 +164,7 @@ async def button_parser(interaction: Interaction, client):
             )
 
         case 'change_questions':
-            if await check_restart(interaction):
+            if await check_restart(interaction, client):
                 return
 
             STATE_MACHINE[interaction.author.id].select_question()
@@ -195,7 +195,7 @@ async def button_parser(interaction: Interaction, client):
                 await msg_media.edit('ᅠ')
 
         case 'questions_left':
-            if await check_restart(interaction):
+            if await check_restart(interaction, client):
                 return
 
             number_question = int(parameters)
@@ -227,7 +227,7 @@ async def button_parser(interaction: Interaction, client):
             )
 
         case 'questions_right':
-            if await check_restart(interaction):
+            if await check_restart(interaction, client):
                 return
 
             number_question = int(parameters)
@@ -259,7 +259,7 @@ async def button_parser(interaction: Interaction, client):
             )
 
         case 'question_edit':
-            if await check_restart(interaction):
+            if await check_restart(interaction, client):
                 return
 
             STATE_MACHINE[interaction.author.id].edit_question()
@@ -273,7 +273,7 @@ async def button_parser(interaction: Interaction, client):
             )
 
         case 'add_question':
-            if await check_restart(interaction):
+            if await check_restart(interaction, client):
                 return
 
             quantity = int(parameters)
@@ -297,7 +297,7 @@ async def button_parser(interaction: Interaction, client):
             )
 
         case 'questions_return':
-            if await check_restart(interaction):
+            if await check_restart(interaction, client):
                 return
 
             STATE_MACHINE[interaction.author.id].select_question_return()
@@ -317,7 +317,7 @@ async def button_parser(interaction: Interaction, client):
             )
 
         case 'question_up':
-            if await check_restart(interaction):
+            if await check_restart(interaction, client):
                 return
 
             question_id, number, quantity = map(int, parameters.split(','))
@@ -344,7 +344,7 @@ async def button_parser(interaction: Interaction, client):
             )
 
         case 'question_down':
-            if await check_restart(interaction):
+            if await check_restart(interaction, client):
                 return
 
             question_id, number, quantity = map(int, parameters.split(','))
@@ -371,7 +371,7 @@ async def button_parser(interaction: Interaction, client):
             )
 
         case 'question_del':
-            if await check_restart(interaction):
+            if await check_restart(interaction, client):
                 return
 
             STATE_MACHINE[interaction.author.id].edit_question_delete()
@@ -397,7 +397,7 @@ async def button_parser(interaction: Interaction, client):
             )
 
         case 'question_text':
-            if await check_restart(interaction):
+            if await check_restart(interaction, client):
                 return
 
             STATE_MACHINE[interaction.author.id].edit_question_text()
@@ -419,7 +419,7 @@ async def button_parser(interaction: Interaction, client):
             )
 
         case 'question_explanation':
-            if await check_restart(interaction):
+            if await check_restart(interaction, client):
                 return
 
             STATE_MACHINE[interaction.author.id].edit_question_explanation()
@@ -442,7 +442,7 @@ async def button_parser(interaction: Interaction, client):
             )
 
         case 'questions_answers':
-            if await check_restart(interaction):
+            if await check_restart(interaction, client):
                 return
 
             STATE_MACHINE[interaction.author.id].edit_question_answers()
@@ -475,7 +475,7 @@ async def button_parser(interaction: Interaction, client):
             )
 
         case 'question_media':
-            if await check_restart(interaction):
+            if await check_restart(interaction, client):
                 return
 
             STATE_MACHINE[interaction.author.id].edit_question_media()
@@ -500,7 +500,7 @@ async def button_parser(interaction: Interaction, client):
             )
 
         case 'question_return':
-            if await check_restart(interaction):
+            if await check_restart(interaction, client):
                 return
 
             STATE_MACHINE[interaction.author.id].edit_question_return()
@@ -569,7 +569,7 @@ async def button_parser(interaction: Interaction, client):
             )
 
         case 'answer_options':
-            if await check_restart(interaction):
+            if await check_restart(interaction, client):
                 return
 
             question_id, number, quantity, answer = map(
@@ -612,7 +612,7 @@ async def button_parser(interaction: Interaction, client):
             )
 
         case 'next_question':
-            if await check_restart(interaction):
+            if await check_restart(interaction, client):
                 return
 
             number, quantity = map(int, parameters.split(','))
@@ -651,7 +651,7 @@ async def button_parser(interaction: Interaction, client):
             )
 
         case 'finish_game':
-            if await check_restart(interaction):
+            if await check_restart(interaction, client):
                 return
 
             correctly_answered = \

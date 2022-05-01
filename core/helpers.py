@@ -2,7 +2,7 @@ from discord_components import Interaction
 
 import embeds
 from core.colors import WarningColor
-from core.config import BOT_ID
+from core.config import BOT_ID, LOGS_CHANNEL
 from core.state_machine import STATE_MACHINE
 
 
@@ -13,7 +13,7 @@ async def get_guild_cached(guild_id, client):
         return client.get_guild(guild_id)
 
 
-async def check_restart(interaction: Interaction):
+async def check_restart(interaction: Interaction, client):
     if interaction.author.id not in STATE_MACHINE:
         try:
             await interaction.message.edit(
@@ -30,17 +30,33 @@ async def check_restart(interaction: Interaction):
                 ),
                 components=[]
             )
-            print(f'[WARNING P] {interaction.author.name} '
-                  f'<{interaction.author.id}> попытался нажать на кнопку, '
-                  f'но был удалён из машины состояний после перезапуска бота')
+            await logging(
+                client,
+                f'[WARNING P] {interaction.author.name} '
+                f'<{interaction.author.id}> попытался нажать на кнопку, '
+                f'но был удалён из машины состояний после перезапуска бота'
+            )
             return True
         except AttributeError:
             await interaction.author.send(
                 'Хм... Что-то пошло не так. '
                 'Отправьте любое сообщение и повторите попытку'
             )
-            print(f'[ERROR P] {interaction.author.name} '
-                  f'<{interaction.author.id}> попытался нажать на кнопку, '
-                  f'но после перезапуска бота что-то пошло не так')
+            await logging(
+                client,
+                f'[ERROR P] {interaction.author.name} '
+                f'<{interaction.author.id}> попытался нажать на кнопку, '
+                f'но после перезапуска бота что-то пошло не так'
+            )
             return True
     return False
+
+
+async def logging(client, msg):
+    if client.get_channel(LOGS_CHANNEL) is None:
+        logs_channel = await client.fetch_channel(LOGS_CHANNEL)
+    else:
+        logs_channel = client.get_channel(LOGS_CHANNEL)
+
+    print(msg)
+    await logs_channel.send(f'`{msg}`')

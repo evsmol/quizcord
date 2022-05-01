@@ -5,6 +5,7 @@ from discord_components import DiscordComponents, Interaction
 import embeds
 from core.colors import WarningColor
 from core.config import DEVELOPERS_ID, BOT_ID
+from core.helpers import logging
 from core.button_parser import button_parser
 from core.state_machine import QuizcordStateMachine, STATE_MACHINE
 from data.quiz_func import add_quiz, update_quiz, get_server_quizzes, \
@@ -21,7 +22,10 @@ client = Bot(command_prefix='-', intents=intents)
 # SERVICE
 @client.event
 async def on_connect():
-    print("[BOT] Connected!")
+    await logging(
+        client,
+        '[BOT] Connected to Discord!'
+    )
 
 
 @client.event
@@ -30,7 +34,10 @@ async def on_ready():
     DiscordComponents(client)
 
     # REPORT
-    print(f"[BOT] Ready! Logged in as {client.user}")
+    await logging(
+        client,
+        f'[BOT] Ready! Logged in as {client.user}'
+    )
 
 
 # BUTTONS
@@ -46,12 +53,18 @@ async def get_help(ctx: Context):
     embed = embeds.Help()
     if ctx.guild:
         await ctx.channel.send(embed=embed, components=embed.keyboard)
-        print(f'[SERVER] {ctx.author.name} <{ctx.author.id}> открывает '
-              f'справочник')
+        await logging(
+            client,
+            f'[SERVER] {ctx.author.name} <{ctx.author.id}> открывает '
+            f'справочник'
+        )
     else:
         await ctx.author.send(embed=embed, components=embed.keyboard)
-        print(f'[PERSONAL] {ctx.author.name} <{ctx.author.id}> открывает '
-              f'справочник')
+        await logging(
+            client,
+            f'[PERSONAL] {ctx.author.name} <{ctx.author.id}> открывает '
+            f'справочник'
+        )
 
 
 @client.command(name='квизы')
@@ -61,8 +74,11 @@ async def get_quizzes_for_server(ctx: Context, user_id=None):
             await ctx.channel.send(
                 embed=embeds.ServerQuizzes(ctx.guild.id)
             )
-            print(f'[SERVER] {ctx.author.name} <{ctx.author.id}> получает '
-                  f'список серверных квизов')
+            await logging(
+                client,
+                f'[SERVER] {ctx.author.name} <{ctx.author.id}> получает '
+                f'список серверных квизов'
+            )
         else:
             user_id = user_id.replace('<@!', '', 1)
             user_id = user_id.replace('<@', '', 1)
@@ -74,29 +90,41 @@ async def get_quizzes_for_server(ctx: Context, user_id=None):
                     raise ValueError
             except ValueError:
                 await ctx.channel.send('Введён некорректный id автора')
-                print(f'[WARNING S] {ctx.author.name} <{ctx.author.id}> '
-                      f'попытался получить список квизов от пользователя с '
-                      f'некорректным id ({user_id})')
+                await logging(
+                    client,
+                    f'[WARNING S] {ctx.author.name} <{ctx.author.id}> '
+                    f'попытался получить список квизов от пользователя с '
+                    f'некорректным id ({user_id})'
+                )
                 return
 
             if user.id == int(BOT_ID):
                 await ctx.channel.send(
                     f'<@{BOT_ID}> пока не научился создавать свои квизы'
                 )
-                print(f'[WARNING S] {ctx.author.name} <{ctx.author.id}> '
-                      f'попытался получить список квизов от quizcord')
+                await logging(
+                    client,
+                    f'[WARNING S] {ctx.author.name} <{ctx.author.id}> '
+                    f'попытался получить список квизов от quizcord'
+                )
             else:
                 await get_quizzes_by_user(ctx, 'квизы', author=user)
-                print(f'[SERVER] {ctx.author.name} <{ctx.author.id}> получает '
-                      f'список квизов от {user.nick} <{user.id}>')
+                await logging(
+                    client,
+                    f'[SERVER] {ctx.author.name} <{ctx.author.id}> получает '
+                    f'список квизов от {user.nick} <{user.id}>'
+                )
 
 
 @client.command(name='создать')
 async def create_quiz(ctx: Context):
     if ctx.author.id in STATE_MACHINE:
         await ctx.send('Нельзя использовать команду в этом состоянии')
-        print(f'[WARNING] {ctx.author.name} <{ctx.author.id}> '
-              f'попытался создать квиз, находясь в состоянии')
+        await logging(
+            client,
+            f'[WARNING] {ctx.author.name} <{ctx.author.id}> '
+            f'попытался создать квиз, находясь в состоянии'
+        )
         return
 
     try:
@@ -116,8 +144,11 @@ async def create_quiz(ctx: Context):
                 embed=view_quiz,
                 components=view_quiz.keyboard
             )
-            print(f'[SERVER] {ctx.author.name} <{ctx.author.id}> '
-                  f'создаёт квиз с сервера')
+            await logging(
+                client,
+                f'[SERVER] {ctx.author.name} <{ctx.author.id}> создаёт квиз '
+                f'с сервера'
+            )
 
         elif len(ctx.author.mutual_guilds) == 1:
             quiz_id = add_quiz(ctx.author.id, ctx.author.mutual_guilds[0].id)
@@ -131,8 +162,11 @@ async def create_quiz(ctx: Context):
                 embed=view_quiz,
                 components=view_quiz.keyboard
             )
-            print(f'[PERSONAL] {ctx.author.name} <{ctx.author.id}> '
-                  f'создаёт квиз, имея один общий сервер')
+            await logging(
+                client,
+                f'[PERSONAL] {ctx.author.name} <{ctx.author.id}> создаёт квиз, '
+                f'имея один общий сервер'
+            )
 
         else:
             STATE_MACHINE[ctx.author.id] = QuizcordStateMachine(
@@ -146,15 +180,21 @@ async def create_quiz(ctx: Context):
             ]
 
             await ctx.author.send(embed=embeds.ChooseServer(servers_names))
-            print(f'[PERSONAL] {ctx.author.name} <{ctx.author.id}> '
-                  f'выбирает сервер для квиза')
+            await logging(
+                client,
+                f'[PERSONAL] {ctx.author.name} <{ctx.author.id}> выбирает '
+                f'сервер для квиза'
+            )
 
     except errors.Forbidden:
         await ctx.channel.send(
             'Чтобы создать квиз, откройте доступ к личным сообщениям'
         )
-        print(f'[WARNING S] {ctx.author.name} <{ctx.author.id}> '
-              f'попытался создать квиз с закрытыми личными сообщениями')
+        await logging(
+            client,
+            f'[WARNING S] {ctx.author.name} <{ctx.author.id}> попытался '
+            f'создать квиз с закрытыми личными сообщениями'
+        )
 
 
 @client.command(name='мои')
@@ -175,8 +215,12 @@ async def get_quizzes_by_user(ctx: Context, ctx2, author=None):
                     ctx.guild.id
                 )
             )
-            print(f'[SERVER] {ctx.author.name} <{ctx.author.id}> '
-                  f'получает список своих квизов')
+            await logging(
+                client,
+                f'[SERVER] {ctx.author.name} <{ctx.author.id}> получает '
+                f'список своих квизов'
+            )
+
         else:
             await ctx.author.send(
                 embed=await embeds.embed_user_quizzes(
@@ -185,8 +229,11 @@ async def get_quizzes_by_user(ctx: Context, ctx2, author=None):
                     client=client
                 )
             )
-            print(f'[PERSONAL] {ctx.author.name} <{ctx.author.id}> '
-                  f'получает список своих квизов')
+            await logging(
+                client,
+                f'[PERSONAL] {ctx.author.name} <{ctx.author.id}> получает '
+                f'список своих квизов'
+            )
 
 
 @client.command(name='квиз')
@@ -197,8 +244,11 @@ async def get_quiz_by_id(ctx: Context, *quiz_id):
             await ctx.channel.send(msg)
         else:
             await ctx.author.send(msg)
-        print(f'[WARNING {"S" if ctx.guild else "P"}] {ctx.author.name} '
-              f'<{ctx.author.id}> попытался получить квиз без id')
+        await logging(
+            client,
+            f'[WARNING {"S" if ctx.guild else "P"}] {ctx.author.name} '
+            f'<{ctx.author.id}> попытался получить квиз без id'
+        )
 
     elif not quiz_id[0].isdigit() or len(quiz_id) > 1:
         msg = 'Введён некорректный номер квиза'
@@ -206,9 +256,12 @@ async def get_quiz_by_id(ctx: Context, *quiz_id):
             await ctx.channel.send(msg)
         else:
             await ctx.author.send(msg)
-        print(f'[WARNING {"S" if ctx.guild else "P"}] {ctx.author.name} '
-              f'<{ctx.author.id}> попытался получить квиз с некорректным id '
-              f'({quiz_id})')
+        await logging(
+            client,
+            f'[WARNING {"S" if ctx.guild else "P"}] {ctx.author.name} '
+            f'<{ctx.author.id}> попытался получить квиз с некорректным id '
+            f'({quiz_id})'
+        )
 
     elif ctx.guild:
         quiz_id = int(quiz_id[0])
@@ -226,12 +279,19 @@ async def get_quiz_by_id(ctx: Context, *quiz_id):
                 embed=view_quiz,
                 components=view_quiz.keyboard
             )
-            print(f'[SERVER] {ctx.author.name} <{ctx.author.id}> '
-                  f'получает квиз #{quiz_id}')
+            await logging(
+                client,
+                f'[SERVER] {ctx.author.name} <{ctx.author.id}> получает квиз '
+                f'#{quiz_id}'
+            )
+
         else:
             await ctx.channel.send('Нет доступа к квизу')
-            print(f'[WARNING S] {ctx.author.name} <{ctx.author.id}> '
-                  f'попытался получить квиз #{quiz_id}, но в доступе отказано')
+            await logging(
+                client,
+                f'[WARNING S] {ctx.author.name} <{ctx.author.id}> попытался '
+                f'получить квиз #{quiz_id}, но в доступе отказано'
+            )
 
     else:
         quiz_id = int(quiz_id[0])
@@ -249,12 +309,19 @@ async def get_quiz_by_id(ctx: Context, *quiz_id):
                 embed=view_quiz,
                 components=view_quiz.keyboard
             )
-            print(f'[PERSONAL] {ctx.author.name} <{ctx.author.id}> '
-                  f'получает квиз #{quiz_id}')
+            await logging(
+                client,
+                f'[PERSONAL] {ctx.author.name} <{ctx.author.id}> получает '
+                f'квиз #{quiz_id}'
+            )
+
         else:
             await ctx.author.send('Нет доступа к квизу')
-            print(f'[WARNING P] {ctx.author.name} <{ctx.author.id}> '
-                  f'попытался получить квиз #{quiz_id}, но в доступе отказано')
+            await logging(
+                client,
+                f'[WARNING P] {ctx.author.name} <{ctx.author.id}> попытался '
+                f'получить квиз #{quiz_id}, но в доступе отказано'
+            )
 
 
 @client.command(name='рейтинг')
@@ -263,15 +330,21 @@ async def get_quiz_rating(ctx: Context, *quiz_id):
         msg = 'Отсутствует номер квиза'
         if ctx.guild:
             await ctx.channel.send(msg)
-            print(f'[WARNING S] {ctx.author.name} <{ctx.author.id}> '
-                  f'попытался получить рейтинг квиза без id')
+            await logging(
+                client,
+                f'[WARNING S] {ctx.author.name} <{ctx.author.id}> попытался '
+                f'получить рейтинг квиза без id'
+            )
 
     elif not quiz_id[0].isdigit() or len(quiz_id) > 1:
         msg = 'Введён некорректный номер квиза'
         if ctx.guild:
             await ctx.channel.send(msg)
-            print(f'[WARNING S] {ctx.author.name} <{ctx.author.id}> попытался '
-                  f'получить рейтинг квиза с некорректным id ({quiz_id})')
+            await logging(
+                client,
+                f'[WARNING S] {ctx.author.name} <{ctx.author.id}> попытался '
+                f'получить рейтинг квиза с некорректным id ({quiz_id})'
+            )
 
     elif ctx.guild:
         quiz_id = int(quiz_id[0])
@@ -282,12 +355,19 @@ async def get_quiz_rating(ctx: Context, *quiz_id):
             await ctx.channel.send(
                 embed=embeds.QuizRating(quiz_id)
             )
-            print(f'[SERVER] {ctx.author.name} <{ctx.author.id}> '
-                  f'получает рейтинг квиза #{quiz_id}')
+            await logging(
+                client,
+                f'[SERVER] {ctx.author.name} <{ctx.author.id}> получает '
+                f'рейтинг квиза #{quiz_id}'
+            )
+
         else:
             await ctx.channel.send('Нет доступа к квизу')
-            print(f'[WARNING S] {ctx.author.name} <{ctx.author.id}> попытался '
-                  f'получить рейтинг квиз #{quiz_id}, но в доступе отказано')
+            await logging(
+                client,
+                f'[WARNING S] {ctx.author.name} <{ctx.author.id}> попытался '
+                f'получить рейтинг квиз #{quiz_id}, но в доступе отказано'
+            )
 
 
 @client.event
@@ -316,9 +396,12 @@ async def on_message(message: Message):
                     await message.author.send(
                         embed=embeds.ChooseServer(servers_names)
                     )
-                    print(f'[WARNING P] {message.author.name} '
-                          f'<{message.author.id}> попытался выбрать сервер, '
-                          f'но список серверов был изменён')
+                    await logging(
+                        client,
+                        f'[WARNING P] {message.author.name} '
+                        f'<{message.author.id}> попытался выбрать сервер, '
+                        f'но список серверов был изменён'
+                    )
 
                 elif message.content.isdigit():
                     if 0 < int(message.content) <= len(user.servers):
@@ -340,9 +423,12 @@ async def on_message(message: Message):
                             embed=view_quiz,
                             components=view_quiz.keyboard
                         )
-                        print(f'[PERSONAL] {message.author.name} '
-                              f'<{message.author.id}> выбирает сервер '
-                              f'({server.name} <{server.id}>)')
+                        await logging(
+                            client,
+                            print(f'[PERSONAL] {message.author.name} '
+                                  f'<{message.author.id}> выбирает сервер '
+                                  f'({server.name} <{server.id}>)')
+                        )
 
                         del STATE_MACHINE[message.author.id]
 
@@ -351,18 +437,24 @@ async def on_message(message: Message):
                             'Нет сервера с таким номером. '
                             'Пожалуйста, выберите сервер повторно'
                         )
-                        print(f'[WARNING P] {message.author.name} '
-                              f'<{message.author.id}> попытался выбрать '
-                              f'несуществующий сервер из списка')
+                        await logging(
+                            client,
+                            f'[WARNING P] {message.author.name} '
+                            f'<{message.author.id}> попытался выбрать '
+                            f'несуществующий сервер из списка'
+                        )
 
                 else:
                     await message.author.send(
                         'Некорректный ввод. '
                         'Пожалуйста, выберите сервер повторно'
                     )
-                    print(f'[WARNING P] {message.author.name} '
-                          f'<{message.author.id}> попытался выбрать '
-                          f'сервер некорректным вводом')
+                    await logging(
+                        client,
+                        f'[WARNING P] {message.author.name} '
+                        f'<{message.author.id}> попытался выбрать '
+                        f'сервер некорректным вводом'
+                    )
 
             case 'quiz_set_title':
                 if len(message.content) > 200:
@@ -370,9 +462,12 @@ async def on_message(message: Message):
                         'Название не должно превышать 200 символов. '
                         'Пожалуйста, введите его повторно'
                     )
-                    print(f'[WARNING P] {message.author.name} '
-                          f'<{message.author.id}> попытался ввести слишком '
-                          f'длинное название квиза')
+                    await logging(
+                        client,
+                        f'[WARNING P] {message.author.name} '
+                        f'<{message.author.id}> попытался ввести слишком '
+                        f'длинное название квиза'
+                    )
 
                 else:
                     STATE_MACHINE[message.author.id].quiz_title_changed()
@@ -389,9 +484,12 @@ async def on_message(message: Message):
                         embed=embed,
                         components=keyboard
                     )
-                    print(f'[PERSONAL] {message.author.name} '
-                          f'<{message.author.id}> изменяет название квиза '
-                          f'#{quiz_id} ({message.content})')
+                    await logging(
+                        client,
+                        f'[PERSONAL] {message.author.name} '
+                        f'<{message.author.id}> изменяет название квиза '
+                        f'#{quiz_id} ({message.content})'
+                    )
 
             case 'quiz_set_description':
                 if len(message.content) > 2000:
@@ -399,9 +497,12 @@ async def on_message(message: Message):
                         'Описание не должно превышать 2000 символов. '
                         'Пожалуйста, введите его повторно'
                     )
-                    print(f'[WARNING P] {message.author.name} '
-                          f'<{message.author.id}> попытался ввести слишком '
-                          f'длинное описание квиза')
+                    await logging(
+                        client,
+                        f'[WARNING P] {message.author.name} '
+                        f'<{message.author.id}> попытался ввести слишком '
+                        f'длинное описание квиза'
+                    )
 
                 else:
                     STATE_MACHINE[message.author.id].quiz_description_changed()
@@ -421,9 +522,12 @@ async def on_message(message: Message):
                         embed=embed,
                         components=keyboard
                     )
-                    print(f'[PERSONAL] {message.author.name} '
-                          f'<{message.author.id}> изменяет описание квиза '
-                          f'#{quiz_id} ({message.content})')
+                    await logging(
+                        client,
+                        f'[PERSONAL] {message.author.name} '
+                        f'<{message.author.id}> изменяет описание квиза '
+                        f'#{quiz_id} ({message.content})'
+                    )
 
             case 'question_set_text':
                 if len(message.content) > 200:
@@ -431,9 +535,12 @@ async def on_message(message: Message):
                         'Текст вопроса не должен превышать 200 символов. '
                         'Пожалуйста, введите его повторно'
                     )
-                    print(f'[WARNING P] {message.author.name} '
-                          f'<{message.author.id}> попытался ввести слишком '
-                          f'длинный текст вопроса')
+                    await logging(
+                        client,
+                        f'[WARNING P] {message.author.name} '
+                        f'<{message.author.id}> попытался ввести слишком '
+                        f'длинный текст вопроса'
+                    )
 
                 else:
                     STATE_MACHINE[message.author.id].question_text_changed()
@@ -460,9 +567,12 @@ async def on_message(message: Message):
                         embed=embed,
                         components=embed.keyboard
                     )
-                    print(f'[PERSONAL] {message.author.name} '
-                          f'<{message.author.id}> изменяет текст вопроса '
-                          f'#{question_id} ({message.content})')
+                    await logging(
+                        client,
+                        f'[PERSONAL] {message.author.name} '
+                        f'<{message.author.id}> изменяет текст вопроса '
+                        f'#{question_id} ({message.content})'
+                    )
 
             case 'question_set_explanation':
                 if len(message.content) > 1000:
@@ -470,9 +580,12 @@ async def on_message(message: Message):
                         'Пояснение не должно превышать 1000 символов. '
                         'Пожалуйста, введите его повторно'
                     )
-                    print(f'[WARNING P] {message.author.name} '
-                          f'<{message.author.id}> попытался ввести слишком '
-                          f'длинное пояснение вопроса')
+                    await logging(
+                        client,
+                        f'[WARNING P] {message.author.name} '
+                        f'<{message.author.id}> попытался ввести слишком '
+                        f'длинное пояснение вопроса'
+                    )
 
                 else:
                     STATE_MACHINE[
@@ -510,9 +623,12 @@ async def on_message(message: Message):
                         embed=embed,
                         components=embed.keyboard
                     )
-                    print(f'[PERSONAL] {message.author.name} '
-                          f'<{message.author.id}> изменяет описание вопроса '
-                          f'#{question_id} ({message.content})')
+                    await logging(
+                        client,
+                        f'[PERSONAL] {message.author.name} '
+                        f'<{message.author.id}> изменяет описание вопроса '
+                        f'#{question_id} ({message.content})'
+                    )
 
             case 'question_set_media':
                 question_id = STATE_MACHINE[message.author.id].question_id
@@ -554,18 +670,24 @@ async def on_message(message: Message):
                         embed=embed,
                         components=embed.keyboard
                     )
-                    print(f'[PERSONAL] {message.author.name} '
-                          f'<{message.author.id}> изменяет медиа вопроса '
-                          f'#{question_id} ({message.content})')
+                    await logging(
+                        client,
+                        f'[PERSONAL] {message.author.name} '
+                        f'<{message.author.id}> изменяет медиа вопроса '
+                        f'#{question_id} ({message.content})'
+                    )
 
                 except IndexError:
                     await message.author.send(
                         'Некорректный ввод. '
                         'Пожалуйста, отправьте файл повторно'
                     )
-                    print(f'[WARNING P] {message.author.name} '
-                          f'<{message.author.id}> попытался изменить медиа '
-                          f'вопроса некорректным вводом')
+                    await logging(
+                        client,
+                        f'[WARNING P] {message.author.name} '
+                        f'<{message.author.id}> попытался изменить медиа '
+                        f'вопроса некорректным вводом'
+                    )
 
             case 'question_set_answers':
                 if message.content == '_':
@@ -578,9 +700,12 @@ async def on_message(message: Message):
                         'Общий текст вариантов ответа не должен превышать '
                         '1000 символов. Пожалуйста, введите его повторно'
                     )
-                    print(f'[WARNING P] {message.author.name} '
-                          f'<{message.author.id}> попытался ввести слишком '
-                          f'длинные варианты ответа')
+                    await logging(
+                        client,
+                        f'[WARNING P] {message.author.name} '
+                        f'<{message.author.id}> попытался ввести слишком '
+                        f'длинные варианты ответа'
+                    )
                     return
 
                 if len(answers) > 5 and answers != '_':
@@ -588,9 +713,12 @@ async def on_message(message: Message):
                         'Вариантов ответа не может быть больше 5. '
                         'Пожалуйста, введите их повторно'
                     )
-                    print(f'[WARNING P] {message.author.name} '
-                          f'<{message.author.id}> попытался ввести больше 5 '
-                          f'вариантов ответа на вопрос')
+                    await logging(
+                        client,
+                        f'[WARNING P] {message.author.name} '
+                        f'<{message.author.id}> попытался ввести больше 5 '
+                        f'вариантов ответа на вопрос'
+                    )
                     return
 
                 right_answer_count = 0
@@ -607,9 +735,12 @@ async def on_message(message: Message):
                                 'Вариант ответа не может быть пустым. '
                                 'Пожалуйста, повторите ввод'
                             )
-                            print(f'[WARNING P] {message.author.name} '
-                                  f'<{message.author.id}> попытался ввести '
-                                  f'пустой вариант ответа')
+                            await logging(
+                                client,
+                                f'[WARNING P] {message.author.name} '
+                                f'<{message.author.id}> попытался ввести '
+                                f'пустой вариант ответа'
+                            )
                             return
 
                 if right_answer_count == 0 and answers != '_':
@@ -617,9 +748,12 @@ async def on_message(message: Message):
                         'Верный вариант ответа не указан. '
                         'Пожалуйста, повторите ввод'
                     )
-                    print(f'[WARNING P] {message.author.name} '
-                          f'<{message.author.id}> попытался ввести ввести '
-                          f'варианты ответа, не указав верный')
+                    await logging(
+                        client,
+                        f'[WARNING P] {message.author.name} '
+                        f'<{message.author.id}> попытался ввести ввести '
+                        f'варианты ответа, не указав верный'
+                    )
                     return
 
                 if right_answer_count > 1 and answers != '_':
@@ -627,9 +761,12 @@ async def on_message(message: Message):
                         'Указано несколько верных вариантов. '
                         'Пожалуйста, повторите ввод'
                     )
-                    print(f'[WARNING P] {message.author.name} '
-                          f'<{message.author.id}> попытался ввести ввести '
-                          f'варианты ответа, указав несколько верных')
+                    await logging(
+                        client,
+                        f'[WARNING P] {message.author.name} '
+                        f'<{message.author.id}> попытался ввести ввести '
+                        f'варианты ответа, указав несколько верных'
+                    )
                     return
 
                 question_id = STATE_MACHINE[message.author.id].question_id
@@ -655,9 +792,12 @@ async def on_message(message: Message):
                     embed=embed,
                     components=embed.keyboard
                 )
-                print(f'[PERSONAL] {message.author.name} '
-                      f'<{message.author.id}> изменяет варианты ответа для '
-                      f'вопроса #{question_id}\n({message.content})')
+                await logging(
+                    client,
+                    f'[PERSONAL] {message.author.name} '
+                    f'<{message.author.id}> изменяет варианты ответа для '
+                    f'вопроса #{question_id}\n({message.content})'
+                )
 
 
 # ADMIN COMMANDS
@@ -669,9 +809,12 @@ async def del_empty_quizzes(ctx: Context, ctx2=None):
             await ctx.channel.send(msg)
         else:
             await ctx.author.send(msg)
-        print(f'[WARNING A{"S" if ctx.guild else "P"}] {ctx.author.name} '
-              f'<{ctx.author.id}> попытался выполнить очистку, не указав '
-              f'компоненты')
+        await logging(
+            client,
+            f'[WARNING A{"S" if ctx.guild else "P"}] {ctx.author.name} '
+            f'<{ctx.author.id}> попытался выполнить очистку, не указав '
+            f'компоненты'
+        )
         return
 
     if ctx.author.id not in DEVELOPERS_ID:
@@ -680,17 +823,23 @@ async def del_empty_quizzes(ctx: Context, ctx2=None):
             await ctx.channel.send(msg)
         else:
             await ctx.author.send(msg)
-        print(f'[WARNING A{"S" if ctx.guild else "P"}] {ctx.author.name} '
-              f'<{ctx.author.id}> попытался выполнить очистку, но в доступе '
-              f'было отказано')
+        await logging(
+            client,
+            f'[WARNING A{"S" if ctx.guild else "P"}] {ctx.author.name} '
+            f'<{ctx.author.id}> попытался выполнить очистку, но в доступе '
+            f'было отказано'
+        )
         return
 
     match ctx2:
         case 'квизы':
             delete_empty_quizzes()
             await ctx.message.add_reaction('✅')
-            print(f'[ADMIN] {ctx.author.name} <{ctx.author.id}> '
-                  f'выполняет очистку квизов')
+            await logging(
+                client,
+                f'[ADMIN] {ctx.author.name} <{ctx.author.id}> '
+                f'выполняет очистку квизов'
+            )
 
 
 @client.command(name='отмена')
@@ -701,19 +850,28 @@ async def cancel(ctx: Context):
             await ctx.channel.send(msg)
         else:
             await ctx.author.send(msg)
-        print(f'[WARNING A{"S" if ctx.guild else "P"}] {ctx.author.name} '
-              f'<{ctx.author.id}> попытался отменить команды, но в доступе '
-              f'было отказано')
+        await logging(
+            client,
+            f'[WARNING A{"S" if ctx.guild else "P"}] {ctx.author.name} '
+            f'<{ctx.author.id}> попытался отменить команды, но в доступе '
+            f'было отказано'
+        )
         return
 
     if ctx.author.id in STATE_MACHINE:
         del STATE_MACHINE[ctx.author.id]
         await ctx.message.add_reaction('✅')
-        print(f'[ADMIN] {ctx.author.name} <{ctx.author.id}> отменяет команды')
+        await logging(
+            client,
+            f'[ADMIN] {ctx.author.name} <{ctx.author.id}> отменяет команды'
+        )
     else:
         await ctx.message.add_reaction('❌')
-        print(f'[WARNING A] {ctx.author.name} <{ctx.author.id}> попытался '
-              f'отменить команды, но текущих команд не найдено')
+        await logging(
+            client,
+            f'[WARNING A] {ctx.author.name} <{ctx.author.id}> попытался '
+            f'отменить команды, но текущих команд не найдено'
+        )
 
 
 @client.command(name='состояния')
@@ -724,9 +882,12 @@ async def get_users_states(ctx: Context):
             await ctx.channel.send(msg)
         else:
             await ctx.author.send(msg)
-        print(f'[WARNING A{"S" if ctx.guild else "P"}] {ctx.author.name} '
-              f'<{ctx.author.id}> попытался получить состояния пользователей, '
-              f'но в доступе было отказано')
+        await logging(
+            client,
+            f'[WARNING A{"S" if ctx.guild else "P"}] {ctx.author.name} '
+            f'<{ctx.author.id}> попытался получить состояния пользователей, '
+            f'но в доступе было отказано'
+        )
         return
 
     response = []
@@ -743,8 +904,11 @@ async def get_users_states(ctx: Context):
         await ctx.channel.send('\n'.join(response))
     else:
         await ctx.author.send('\n'.join(response))
-    print(f'[ADMIN] {ctx.author.name} <{ctx.author.id}> получает состояния '
-          f'пользователей')
+    await logging(
+        client,
+        f'[ADMIN] {ctx.author.name} <{ctx.author.id}> получает состояния '
+        f'пользователей'
+    )
 
 
 @client.command(name='перезапуск')
@@ -755,9 +919,12 @@ async def restart_warning(ctx: Context):
             await ctx.channel.send(msg)
         else:
             await ctx.author.send(msg)
-        print(f'[WARNING A{"S" if ctx.guild else "P"}] {ctx.author.name} '
-              f'<{ctx.author.id}> попытался предупредить пользователей о '
-              f'перезапуске, но в доступе было отказано')
+        await logging(
+            client,
+            f'[WARNING A{"S" if ctx.guild else "P"}] {ctx.author.name} '
+            f'<{ctx.author.id}> попытался предупредить пользователей о '
+            f'перезапуске, но в доступе было отказано'
+        )
         return
 
     states = [
@@ -786,5 +953,8 @@ async def restart_warning(ctx: Context):
 
     await ctx.message.add_reaction('✅')
 
-    print(f'[ADMIN] {ctx.author.name} <{ctx.author.id}> рассылает '
-          f'предупреждения о перезапуске')
+    await logging(
+        client,
+        f'[ADMIN] {ctx.author.name} <{ctx.author.id}> рассылает '
+        f'предупреждения о перезапуске'
+    )

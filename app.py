@@ -4,11 +4,11 @@ from data import db_session
 
 
 def main():
-    print(f"[DATABASE] Database initialization")
+    print('[DATABASE] Database initialization')
     db_session.global_init(DATABASE_URL)
 
-    print(f"[BOT] The bot version {VERSION} has been launched")
-    print("[BOT] Connecting to Discord...")
+    print(f'[BOT] The bot version {VERSION} has been launched')
+    print('[BOT] Connecting to Discord...')
     client.run(BOT_TOKEN)
 
 

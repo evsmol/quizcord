@@ -3,6 +3,7 @@ from discord_components import Interaction
 import embeds
 from core.strings import NULL_QUIZ_TITLE
 from core.state_machine import QuizcordStateMachine, STATE_MACHINE
+from core.helpers import check_restart
 from data.quiz_func import update_quiz, del_quiz, get_quiz, \
     check_quiz_for_publication
 from data.question_func import add_question, del_question, get_question
@@ -42,6 +43,9 @@ async def button_parser(interaction: Interaction, client):
             STATE_MACHINE[interaction.author.id].quiz_id = int(quiz_id)
 
         case 'published_quiz':
+            if await check_restart(interaction):
+                return
+
             quiz_id, server_name = parameters.split(',')
 
             if not check_quiz_for_publication(int(quiz_id)):
@@ -73,6 +77,9 @@ async def button_parser(interaction: Interaction, client):
             )
 
         case 'unpublished_quiz':
+            if await check_restart(interaction):
+                return
+
             quiz_id, server_name = parameters.split(',')
 
             update_quiz(quiz_id, publication=False, players=[])
@@ -86,6 +93,9 @@ async def button_parser(interaction: Interaction, client):
                 components=keyboard
             )
         case 'del_quiz':
+            if await check_restart(interaction):
+                return
+
             del STATE_MACHINE[interaction.author.id]
 
             quiz_id, server_name = parameters.split(',')
@@ -101,6 +111,9 @@ async def button_parser(interaction: Interaction, client):
             )
 
         case 'return_change_quiz':
+            if await check_restart(interaction):
+                return
+
             del STATE_MACHINE[interaction.author.id]
 
             quiz_id, server_name = parameters.split(',')
@@ -116,6 +129,9 @@ async def button_parser(interaction: Interaction, client):
             )
 
         case 'change_title':
+            if await check_restart(interaction):
+                return
+
             STATE_MACHINE[interaction.author.id].edit_quiz_title()
 
             quiz_id, server_name = parameters.split(',')
@@ -130,6 +146,9 @@ async def button_parser(interaction: Interaction, client):
             )
 
         case 'change_description':
+            if await check_restart(interaction):
+                return
+
             STATE_MACHINE[interaction.author.id].edit_quiz_description()
 
             quiz_id, server_name = parameters.split(',')
@@ -145,6 +164,9 @@ async def button_parser(interaction: Interaction, client):
             )
 
         case 'change_questions':
+            if await check_restart(interaction):
+                return
+
             STATE_MACHINE[interaction.author.id].select_question()
 
             question_id, number, quantity = map(int, parameters.split(','))
@@ -173,6 +195,9 @@ async def button_parser(interaction: Interaction, client):
                 await msg_media.edit('ᅠ')
 
         case 'questions_left':
+            if await check_restart(interaction):
+                return
+
             number_question = int(parameters)
 
             quiz_id = STATE_MACHINE[interaction.author.id].quiz_id
@@ -202,6 +227,9 @@ async def button_parser(interaction: Interaction, client):
             )
 
         case 'questions_right':
+            if await check_restart(interaction):
+                return
+
             number_question = int(parameters)
 
             quiz_id = STATE_MACHINE[interaction.author.id].quiz_id
@@ -231,6 +259,9 @@ async def button_parser(interaction: Interaction, client):
             )
 
         case 'question_edit':
+            if await check_restart(interaction):
+                return
+
             STATE_MACHINE[interaction.author.id].edit_question()
 
             question_id, number, quantity = parameters.split(',')
@@ -242,6 +273,9 @@ async def button_parser(interaction: Interaction, client):
             )
 
         case 'add_question':
+            if await check_restart(interaction):
+                return
+
             quantity = int(parameters)
 
             quiz_id = STATE_MACHINE[interaction.author.id].quiz_id
@@ -263,6 +297,9 @@ async def button_parser(interaction: Interaction, client):
             )
 
         case 'questions_return':
+            if await check_restart(interaction):
+                return
+
             STATE_MACHINE[interaction.author.id].select_question_return()
             quiz_id = STATE_MACHINE[interaction.author.id].quiz_id
 
@@ -280,6 +317,9 @@ async def button_parser(interaction: Interaction, client):
             )
 
         case 'question_up':
+            if await check_restart(interaction):
+                return
+
             question_id, number, quantity = map(int, parameters.split(','))
 
             quiz_id = STATE_MACHINE[interaction.author.id].quiz_id
@@ -304,6 +344,9 @@ async def button_parser(interaction: Interaction, client):
             )
 
         case 'question_down':
+            if await check_restart(interaction):
+                return
+
             question_id, number, quantity = map(int, parameters.split(','))
 
             quiz_id = STATE_MACHINE[interaction.author.id].quiz_id
@@ -328,6 +371,9 @@ async def button_parser(interaction: Interaction, client):
             )
 
         case 'question_del':
+            if await check_restart(interaction):
+                return
+
             STATE_MACHINE[interaction.author.id].edit_question_delete()
 
             question_id, number, quantity = map(int, parameters.split(','))
@@ -351,6 +397,9 @@ async def button_parser(interaction: Interaction, client):
             )
 
         case 'question_text':
+            if await check_restart(interaction):
+                return
+
             STATE_MACHINE[interaction.author.id].edit_question_text()
 
             question_id, number, quantity = map(int, parameters.split(','))
@@ -370,6 +419,9 @@ async def button_parser(interaction: Interaction, client):
             )
 
         case 'question_explanation':
+            if await check_restart(interaction):
+                return
+
             STATE_MACHINE[interaction.author.id].edit_question_explanation()
 
             question_id, number, quantity = map(int, parameters.split(','))
@@ -390,6 +442,9 @@ async def button_parser(interaction: Interaction, client):
             )
 
         case 'questions_answers':
+            if await check_restart(interaction):
+                return
+
             STATE_MACHINE[interaction.author.id].edit_question_answers()
 
             question_id, number, quantity = map(int, parameters.split(','))
@@ -420,6 +475,9 @@ async def button_parser(interaction: Interaction, client):
             )
 
         case 'question_media':
+            if await check_restart(interaction):
+                return
+
             STATE_MACHINE[interaction.author.id].edit_question_media()
 
             question_id, number, quantity = map(int, parameters.split(','))
@@ -442,6 +500,9 @@ async def button_parser(interaction: Interaction, client):
             )
 
         case 'question_return':
+            if await check_restart(interaction):
+                return
+
             STATE_MACHINE[interaction.author.id].edit_question_return()
 
             question_id, number, quantity = parameters.split(',')
@@ -508,6 +569,9 @@ async def button_parser(interaction: Interaction, client):
             )
 
         case 'answer_options':
+            if await check_restart(interaction):
+                return
+
             question_id, number, quantity, answer = map(
                 int, parameters.split(',')
             )
@@ -548,6 +612,9 @@ async def button_parser(interaction: Interaction, client):
             )
 
         case 'next_question':
+            if await check_restart(interaction):
+                return
+
             number, quantity = map(int, parameters.split(','))
 
             quiz_id = STATE_MACHINE[interaction.author.id].quiz_id
@@ -584,6 +651,9 @@ async def button_parser(interaction: Interaction, client):
             )
 
         case 'finish_game':
+            if await check_restart(interaction):
+                return
+
             correctly_answered = \
                 STATE_MACHINE[interaction.author.id].correctly_answered
 

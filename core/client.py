@@ -3,6 +3,7 @@ from discord.ext.commands import Bot, Context, errors
 from discord_components import DiscordComponents, Interaction
 
 import embeds
+from core.colors import WarningColor
 from core.config import DEVELOPERS_ID, BOT_ID
 from core.button_parser import button_parser
 from core.state_machine import QuizcordStateMachine, STATE_MACHINE
@@ -724,8 +725,8 @@ async def get_users_states(ctx: Context):
         else:
             await ctx.author.send(msg)
         print(f'[WARNING A{"S" if ctx.guild else "P"}] {ctx.author.name} '
-              f'<{ctx.author.id}> попытался отменить команды, но в доступе '
-              f'было отказано')
+              f'<{ctx.author.id}> попытался получить состояния пользователей, '
+              f'но в доступе было отказано')
         return
 
     response = []
@@ -744,3 +745,46 @@ async def get_users_states(ctx: Context):
         await ctx.author.send('\n'.join(response))
     print(f'[ADMIN] {ctx.author.name} <{ctx.author.id}> получает состояния '
           f'пользователей')
+
+
+@client.command(name='перезапуск')
+async def restart_warning(ctx: Context):
+    if ctx.author.id not in DEVELOPERS_ID:
+        msg = 'Эта команда доступна только разработчикам'
+        if ctx.guild:
+            await ctx.channel.send(msg)
+        else:
+            await ctx.author.send(msg)
+        print(f'[WARNING A{"S" if ctx.guild else "P"}] {ctx.author.name} '
+              f'<{ctx.author.id}> попытался предупредить пользователей о '
+              f'перезапуске, но в доступе было отказано')
+        return
+
+    states = [
+        'quiz_set_server', 'quiz_set_title', 'quiz_set_description',
+        'question_set_text', 'question_set_explanation', 'question_set_media',
+        'question_set_answers'
+    ]
+
+    for user_id, machine in STATE_MACHINE.items():
+        if machine.state in states:
+            user = client.get_user(user_id)
+
+            await user.send(
+                embed=embeds.Notification(
+                    'quizcord будет перезапущен',
+                    'После перезапуска бота информация о состояниях '
+                    'пользователей будет потеряна, внесённая же информация '
+                    'сохранена.\n'
+                    'Для продолжения редактирования или прохождения квиза '
+                    'будет необходимо войти в состояние ещё раз.\n'
+                    'Приносим извинения за доставленные неудобства, мы '
+                    f'активно работаем над совершенствованием <@{BOT_ID}>',
+                    color=WarningColor
+                )
+            )
+
+    await ctx.message.add_reaction('✅')
+
+    print(f'[ADMIN] {ctx.author.name} <{ctx.author.id}> рассылает '
+          f'предупреждения о перезапуске')

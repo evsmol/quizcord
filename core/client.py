@@ -599,7 +599,17 @@ async def on_message(message: Message):
                     if answer.startswith('+'):
                         right_answer = i
                         right_answer_count += 1
-                        answers[i] = answer.lstrip('+')
+                        answers[i] = answer[1:]
+
+                        if not answer[1:]:
+                            await message.author.send(
+                                'Вариант ответа не может быть пустым. '
+                                'Пожалуйста, повторите ввод'
+                            )
+                            print(f'[WARNING P] {message.author.name} '
+                                  f'<{message.author.id}> попытался ввести '
+                                  f'пустой вариант ответа')
+                            return
 
                 if right_answer_count == 0 and answers != '_':
                     await message.author.send(
@@ -703,3 +713,34 @@ async def cancel(ctx: Context):
         await ctx.message.add_reaction('❌')
         print(f'[WARNING A] {ctx.author.name} <{ctx.author.id}> попытался '
               f'отменить команды, но текущих команд не найдено')
+
+
+@client.command(name='состояния')
+async def get_users_states(ctx: Context):
+    if ctx.author.id not in DEVELOPERS_ID:
+        msg = 'Эта команда доступна только разработчикам'
+        if ctx.guild:
+            await ctx.channel.send(msg)
+        else:
+            await ctx.author.send(msg)
+        print(f'[WARNING A{"S" if ctx.guild else "P"}] {ctx.author.name} '
+              f'<{ctx.author.id}> попытался отменить команды, но в доступе '
+              f'было отказано')
+        return
+
+    response = []
+
+    if not STATE_MACHINE:
+        response.append('Машина состояний пуста')
+
+    else:
+        for user_id, state in STATE_MACHINE.items():
+            user = client.get_user(user_id)
+            response.append(f'```{user.name}\t{user.id}\t{state.state}```')
+
+    if ctx.guild:
+        await ctx.channel.send('\n'.join(response))
+    else:
+        await ctx.author.send('\n'.join(response))
+    print(f'[ADMIN] {ctx.author.name} <{ctx.author.id}> получает состояния '
+          f'пользователей')

@@ -1,6 +1,6 @@
 from discord import Message, Intents, errors
 from discord.ext.commands import Bot, Context, errors
-from discord_components import DiscordComponents, Interaction
+from discord_components_mirror import DiscordComponents, Interaction
 
 import embeds
 from core.colors import WarningColor

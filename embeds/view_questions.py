@@ -1,5 +1,5 @@
 from discord import Embed
-from discord_components import Button
+from discord_components_mirror import Button
 
 from core.colors import QuizcordColor
 from core.strings import NULL_QUESTION_TEXT, NULL_QUESTION_ANSWERS

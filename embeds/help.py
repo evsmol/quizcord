@@ -1,5 +1,5 @@
 from discord import Embed
-from discord_components import Button, ButtonStyle
+from discord_components_mirror import Button, ButtonStyle
 
 from core.colors import QuizcordColor
 

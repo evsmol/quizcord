@@ -1,4 +1,4 @@
-from discord_components import Interaction
+from discord_components_mirror import Interaction
 
 import embeds
 from core.strings import NULL_QUIZ_TITLE
